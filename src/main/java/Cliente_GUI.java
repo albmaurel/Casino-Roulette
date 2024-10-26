@@ -22,13 +22,14 @@ public class Cliente_GUI {
 
     // Conjuntos de números rojos y negros según la imagen
     private static final Set<Integer> NUMEROS_ROJOS = Set.of(
-            3, 6, 9, 12, 15, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
+            1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
     );
     private static final Set<Integer> NUMEROS_NEGROS = Set.of(
-            2, 4, 8, 10, 11, 13, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35
+            2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35
     );
 
     public Cliente_GUI() {
+
         iniciarInterfaz();
         conectarAlServidor();
     }
@@ -44,16 +45,17 @@ public class Cliente_GUI {
         for (int i = 0; i <= 36; i++) {
             JButton btnNumero = new JButton(String.valueOf(i));
             if (i == 0) {
-                btnNumero.setBackground(Color.GREEN);  // Verde para el número 0
+                btnNumero.setBackground(Color.GREEN);// Verde para el número 0
             } else if (NUMEROS_ROJOS.contains(i)) {
-                btnNumero.setBackground(Color.RED);  // Rojo para números en el conjunto de rojos
+                btnNumero.setBackground(Color.RED);
+                btnNumero.setForeground(Color.WHITE);// Rojo para números en el conjunto de rojos
             } else if (NUMEROS_NEGROS.contains(i)) {
                 btnNumero.setBackground(Color.BLACK);  // Negro para números en el conjunto de negros
                 btnNumero.setForeground(Color.WHITE);  // Texto en blanco para visibilidad
             }
 
             // Listener para cada botón de número
-            btnNumero.addActionListener(e -> manejarApuesta("Número " + btnNumero.getText()));
+            btnNumero.addActionListener(e -> manejarApuesta("N" + btnNumero.getText()));
             panelRuleta.add(btnNumero);
         }
 
@@ -61,18 +63,18 @@ public class Cliente_GUI {
         JPanel panelApuestas = new JPanel(new GridLayout(2, 2));
         JButton btnRojo = new JButton("Rojo");
         btnRojo.setBackground(Color.RED);
-        btnRojo.addActionListener(e -> manejarApuesta("Rojo"));
+        btnRojo.addActionListener(e -> manejarApuesta("R"));
 
         JButton btnNegro = new JButton("Negro");
         btnNegro.setBackground(Color.BLACK);
         btnNegro.setForeground(Color.WHITE);
-        btnNegro.addActionListener(e -> manejarApuesta("Negro"));
+        btnNegro.addActionListener(e -> manejarApuesta("N"));
 
         JButton btnPar = new JButton("Par");
-        btnPar.addActionListener(e -> manejarApuesta("Par"));
+        btnPar.addActionListener(e -> manejarApuesta("P"));
 
         JButton btnImpar = new JButton("Impar");
-        btnImpar.addActionListener(e -> manejarApuesta("Impar"));
+        btnImpar.addActionListener(e -> manejarApuesta("I"));
 
         panelApuestas.add(btnRojo);
         panelApuestas.add(btnNegro);
@@ -164,6 +166,6 @@ public class Cliente_GUI {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Cliente_GUI());
+        new Cliente_GUI();
     }
 }
