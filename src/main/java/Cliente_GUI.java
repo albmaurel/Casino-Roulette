@@ -1,9 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class Cliente_GUI {
@@ -12,13 +13,13 @@ public class Cliente_GUI {
     private JTextField textFieldSaldo, textFieldApuesta, textFieldNumeroGanador;
     private JTextArea textAreaApuestas;
     private JLabel labelTemporizador;
+    private JDialog dialogGanador;
 
-    private String apuestaActual = "";
-    private int cantidadApuesta = 0;
     private int saldo = 10000;  // Saldo inicial
     private Socket socket;
-    private BufferedWriter out;
+    private ObjectOutputStream out;
     private BufferedReader in;
+    private ArrayList<String> apuestas = new ArrayList<>();
 
     // Conjuntos de números rojos y negros según la imagen
     private static final Set<Integer> NUMEROS_ROJOS = Set.of(
@@ -29,92 +30,124 @@ public class Cliente_GUI {
     );
 
     public Cliente_GUI() {
-
         iniciarInterfaz();
-        conectarAlServidor();
     }
 
     private void iniciarInterfaz() {
         frame = new JFrame("Ruleta - Cliente");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 600);
+        frame.setSize(1200, 600);  // Ajuste del tamaño de la ventana
         frame.setLayout(new BorderLayout());
 
-        // Panel para la ruleta (números)
-        JPanel panelRuleta = new JPanel(new GridLayout(4, 10));
-        for (int i = 0; i <= 36; i++) {
-            JButton btnNumero = new JButton(String.valueOf(i));
-            if (i == 0) {
-                btnNumero.setBackground(Color.GREEN);// Verde para el número 0
-            } else if (NUMEROS_ROJOS.contains(i)) {
-                btnNumero.setBackground(Color.RED);
-                btnNumero.setForeground(Color.WHITE);// Rojo para números en el conjunto de rojos
-            } else if (NUMEROS_NEGROS.contains(i)) {
-                btnNumero.setBackground(Color.BLACK);  // Negro para números en el conjunto de negros
-                btnNumero.setForeground(Color.WHITE);  // Texto en blanco para visibilidad
-            }
+        // Panel principal de la ruleta en disposición horizontal
+        JPanel panelRuleta = new JPanel(new BorderLayout());
 
-            // Listener para cada botón de número
-            btnNumero.addActionListener(e -> manejarApuesta("N" + btnNumero.getText()));
-            panelRuleta.add(btnNumero);
+        // Panel para el 0 a la izquierda ocupando la altura de tres filas
+        JButton btnCero = new JButton("0");
+        btnCero.setBackground(Color.GREEN);
+        btnCero.setPreferredSize(new Dimension(70, 300)); // Tamaño personalizado para destacarlo
+        btnCero.addActionListener(e -> manejarApuesta("Numero 0"));
+
+        // Panel para los números restantes, organizado en tres filas y 12 columnas
+        JPanel panelNumeros = new JPanel(new GridLayout(3, 12, 5, 5)); // 3 filas y 12 columnas
+
+        // Lista de números organizada en filas horizontales como en una ruleta
+        int[][] numerosRuleta = {
+                {3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36},
+                {2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35},
+                {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34}
+        };
+
+        // Crear botones para cada número en el orden deseado
+        for (int fila = 0; fila < 3; fila++) {
+            for (int col = 0; col < 12; col++) {
+                int numero = numerosRuleta[fila][col];
+                JButton btnNumero = new JButton(String.valueOf(numero));
+
+                // Colores para rojo y negro
+                if (NUMEROS_ROJOS.contains(numero)) {
+                    btnNumero.setBackground(Color.RED);
+                    btnNumero.setForeground(Color.WHITE);
+                } else if (NUMEROS_NEGROS.contains(numero)) {
+                    btnNumero.setBackground(Color.BLACK);
+                    btnNumero.setForeground(Color.WHITE);
+                }
+
+                final int numeroApuesta = numero;
+                btnNumero.addActionListener(e -> manejarApuesta("Numero " + numeroApuesta));
+                panelNumeros.add(btnNumero);
+            }
         }
+
+        // Añadir el panelCero y panelNumeros al panel principal de la ruleta
+        panelRuleta.add(btnCero, BorderLayout.WEST);
+        panelRuleta.add(panelNumeros, BorderLayout.CENTER);
 
         // Panel para apuestas adicionales (color, par/impar)
         JPanel panelApuestas = new JPanel(new GridLayout(2, 2));
         JButton btnRojo = new JButton("Rojo");
         btnRojo.setBackground(Color.RED);
-        btnRojo.addActionListener(e -> manejarApuesta("R"));
+        btnRojo.addActionListener(e -> manejarApuesta("Rojo"));
 
         JButton btnNegro = new JButton("Negro");
         btnNegro.setBackground(Color.BLACK);
         btnNegro.setForeground(Color.WHITE);
-        btnNegro.addActionListener(e -> manejarApuesta("N"));
+        btnNegro.addActionListener(e -> manejarApuesta("Negro"));
 
         JButton btnPar = new JButton("Par");
-        btnPar.addActionListener(e -> manejarApuesta("P"));
+        btnPar.addActionListener(e -> manejarApuesta("Par"));
 
         JButton btnImpar = new JButton("Impar");
-        btnImpar.addActionListener(e -> manejarApuesta("I"));
+        btnImpar.addActionListener(e -> manejarApuesta("Impar"));
 
         panelApuestas.add(btnRojo);
         panelApuestas.add(btnNegro);
         panelApuestas.add(btnPar);
         panelApuestas.add(btnImpar);
 
-        // Panel para saldo y apuestas
-        JPanel panelSaldo = new JPanel(new GridLayout(3, 2));
-        panelSaldo.add(new JLabel("Saldo:"));
-        textFieldSaldo = new JTextField(String.valueOf(saldo));
+        JPanel panelSaldo = new JPanel(new GridLayout(2, 1));
+
+        // Crear un panel para colocar saldo y apuesta
+        JLabel labelSaldo = new JLabel("Saldo");
+        labelSaldo.setHorizontalAlignment(SwingConstants.CENTER);
+        panelSaldo.add(labelSaldo);
+        textFieldSaldo = new JTextField(String.valueOf(saldo)+" $");
         textFieldSaldo.setEditable(false);
+        textFieldSaldo.setHorizontalAlignment(SwingConstants.CENTER);
         panelSaldo.add(textFieldSaldo);
-        panelSaldo.add(new JLabel("Apuesta:"));
+
+        JLabel labelApuesta = new JLabel("Apuesta");
+        labelApuesta.setHorizontalAlignment(SwingConstants.CENTER);
+        panelSaldo.add(labelApuesta);
         textFieldApuesta = new JTextField();
+        textFieldApuesta.setHorizontalAlignment(SwingConstants.CENTER);
         panelSaldo.add(textFieldApuesta);
+
 
         // Panel para mostrar apuestas y resultados
         JPanel panelResultados = new JPanel(new BorderLayout());
-        textAreaApuestas = new JTextArea();
+        textAreaApuestas = new JTextArea(" Apuestas realizadas:\n");
         textAreaApuestas.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textAreaApuestas);
+        scrollPane.setPreferredSize(new Dimension(150, 300));
         panelResultados.add(scrollPane, BorderLayout.CENTER);
-
-        // Panel para mostrar el número ganador
-        JPanel panelNumeroGanador = new JPanel();
-        panelNumeroGanador.add(new JLabel("Número Ganador:"));
-        textFieldNumeroGanador = new JTextField(10);
-        textFieldNumeroGanador.setEditable(false);
-        panelNumeroGanador.add(textFieldNumeroGanador);
 
         // Temporizador
         labelTemporizador = new JLabel("Tiempo Restante: ");
+        labelTemporizador.setPreferredSize(new Dimension(200, 40));
+        labelTemporizador.setHorizontalAlignment(SwingConstants.CENTER);
+        labelTemporizador.setVerticalAlignment(SwingConstants.CENTER);
 
         // Añadir todos los paneles al frame principal
         frame.add(panelRuleta, BorderLayout.CENTER);
         frame.add(panelApuestas, BorderLayout.NORTH);
         frame.add(panelSaldo, BorderLayout.WEST);
         frame.add(panelResultados, BorderLayout.EAST);
-        frame.add(panelNumeroGanador, BorderLayout.SOUTH);
         frame.add(labelTemporizador, BorderLayout.PAGE_END);
+
+        // Aumentar el tamaño de los cuadros de texto
+        textFieldSaldo.setPreferredSize(new Dimension(100, 150));  // Ajuste del tamaño
+        textFieldApuesta.setPreferredSize(new Dimension(100, 150)); // Ajuste del tamaño
 
         frame.setVisible(true);
     }
@@ -129,43 +162,73 @@ public class Cliente_GUI {
 
             // Descontar la apuesta del saldo
             saldo -= cantidad;
-            textFieldSaldo.setText(String.valueOf(saldo));
+            textFieldSaldo.setText(String.valueOf(saldo)+" $");
 
-            // Guardar y mostrar la apuesta realizada
-            String mensajeApuesta =  tipoApuesta + " " + cantidad;
-            textAreaApuestas.append(mensajeApuesta + "\n");
+            // Guardar y mostrar la apuesta realizada con el nombre completo
+            String mensajeApuesta = tipoApuesta + ": " + cantidad+ " $"+"\n";
+            textAreaApuestas.append(mensajeApuesta);
 
-            // Enviar la apuesta al servidor si se desea
-            enviarApuesta(tipoApuesta, cantidad);
-
+            if (tipoApuesta.startsWith("Numero")) {
+                String numero = tipoApuesta.split(" ")[1];
+                mensajeApuesta = "N" + numero + " " + cantidad+"\n";
+            } else {
+                String inicial = tipoApuesta.substring(0, 1).toUpperCase();
+                mensajeApuesta = inicial + " " + cantidad+"\n";
+            }
+            apuestas.add(mensajeApuesta);
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(frame, "Introduce un número válido en el campo de apuesta.");
         }
     }
 
-    private void conectarAlServidor() {
-        try {
-            socket = new Socket("localhost", 55555);
-            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            // Puedes iniciar un hilo para escuchar mensajes del servidor aquí
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void vaciarApuestas(){
+        this.apuestas.clear();
     }
 
-    private void enviarApuesta(String tipoApuesta, int cantidad) {
-        try {
-            if (out != null) {
-                out.write(tipoApuesta +" "+ cantidad + "\n");
-                out.flush();
+    // Este método maneja la conexión y la recepción de datos
+    public void iniciarConexion(String host, int puerto) {
+        try (Socket socket = new Socket(host, puerto);
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+            while (true) {
+                String leido = reader.readLine();
+                if (leido.equals("0")) {
+                    labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
+                    out.writeObject(apuestas); // Accede a apuestas desde la instancia
+                    out.flush();
+                    this.vaciarApuestas();
+
+                    if (dialogGanador != null && dialogGanador.isShowing()) {
+                        dialogGanador.dispose();
+                        dialogGanador = null;
+                    }
+                } else if (leido.equals("20")) {
+                    labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
+                    String numeroganador = reader.readLine();
+                    dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
+
+                    String ganancias = reader.readLine();
+                    saldo += Integer.parseInt(ganancias); // Actualiza el saldo
+                } else {
+                    labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private JDialog mostrarPopup(String mensaje, String titulo) {
+        JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE);
+        JDialog dialog = optionPane.createDialog(titulo);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setVisible(true);
+        return dialog;
+    }
+
     public static void main(String[] args) {
-        new Cliente_GUI();
+        Cliente_GUI clienteGUI = new Cliente_GUI();
+        clienteGUI.iniciarConexion("localhost", 55555); // Inicia la conexión
     }
 }
