@@ -13,8 +13,8 @@ public class clienteprueba {
             int aux=0;
             while(true) {
                 String leido=reader.readLine();
-                System.out.print(leido+"\n");
 
+                System.out.print(leido+"\n");
 
             }
             } catch (UnknownHostException e) {
@@ -24,5 +24,11 @@ public class clienteprueba {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
     }
 }
+
+
+
+
+
