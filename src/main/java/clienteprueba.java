@@ -8,6 +8,8 @@ public class clienteprueba {
         try (Socket s = new Socket("localhost", 55555);
              BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(s.getOutputStream(),"UTF-8"));
              BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream(), "UTF-8"));
+             ObjectOutputStream ois=new ObjectOutputStream(s.getOutputStream());
+
         )
         {
             int aux=0;
@@ -15,6 +17,7 @@ public class clienteprueba {
                 String leido=reader.readLine();
                 System.out.println(leido);
             }
+
             } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         } catch (UnsupportedEncodingException e) {

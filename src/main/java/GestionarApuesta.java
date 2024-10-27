@@ -14,13 +14,11 @@ public class GestionarApuesta implements Runnable{
         try
         {
             BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(s.getOutputStream(),"UTF-8"));
-            BufferedReader reader=new BufferedReader(new InputStreamReader(s.getInputStream(),"UTF-8"));
             ObjectInputStream ois=new ObjectInputStream(s.getInputStream());
             while(true)
             {
                 if(auxiliar!=Servidor.getCont() && Servidor.getFase()==0)
                 {
-
                     auxiliar=Servidor.getCont();
                     if(auxiliar==0)
                     {
@@ -48,7 +46,7 @@ public class GestionarApuesta implements Runnable{
                         writer.flush();
                     }
                 }
-                else
+                else if(Servidor.getFase()==1)
                 {
                     ArrayList<String> apuestas=(ArrayList<String>) ois.readObject();
                     for(String apuesta:apuestas)
