@@ -189,10 +189,10 @@ public class Cliente_GUI {
 
             if (tipoApuesta.startsWith("Numero")) {
                 String numero = tipoApuesta.split(" ")[1];
-                mensajeApuesta = "N" + numero + " " + cantidad+" \n";
+                mensajeApuesta = "N" + numero + " " + cantidad;
             } else {
                 String inicial = tipoApuesta.substring(0, 1).toUpperCase();
-                mensajeApuesta = inicial + " " + cantidad+" \n";
+                mensajeApuesta = inicial + " " + cantidad;
             }
             System.out.println(mensajeApuesta);
             apuestas.add(mensajeApuesta);
@@ -226,14 +226,15 @@ public class Cliente_GUI {
                     out.writeObject(apuestas); // Accede a apuestas desde la instancia
                     out.flush();
                     this.vaciarApuestas();
-                } else if (leido.equals("S20")) {
-                    labelTemporizador.setText("Tiempo Restante: 20 segundos");
+                }
+                else if (leido.equals("S20")) {
                     String numeroganador = reader.readLine();
                     dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
 
                     String ganancias = reader.readLine();
                     saldo += Integer.parseInt(ganancias); // Actualiza el saldo
-                } else {
+                }
+                else {
                     labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
                 }
             }

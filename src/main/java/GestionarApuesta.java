@@ -40,6 +40,7 @@ public class GestionarApuesta implements Runnable{
                         writer.write(auxiliar + "\n");
                         if(auxiliar==20)
                         {
+                            writer.write("S"+auxiliar + "\n");
                             writer.write(Servidor.getGanador() + "\n");
                             writer.write(ganancias+"\n");
                         }
@@ -52,6 +53,7 @@ public class GestionarApuesta implements Runnable{
                     for(String apuesta:apuestas)
                     {
                         ganancias+=calcular(apuesta);
+                        System.out.println(ganancias);
                     }
                 }
                 System.out.println("");
