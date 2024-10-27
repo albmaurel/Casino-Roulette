@@ -189,11 +189,12 @@ public class Cliente_GUI {
 
             if (tipoApuesta.startsWith("Numero")) {
                 String numero = tipoApuesta.split(" ")[1];
-                mensajeApuesta = "N" + numero + " " + cantidad+"\n";
+                mensajeApuesta = "N" + numero + " " + cantidad+" \n";
             } else {
                 String inicial = tipoApuesta.substring(0, 1).toUpperCase();
-                mensajeApuesta = inicial + " " + cantidad+"\n";
+                mensajeApuesta = inicial + " " + cantidad+" \n";
             }
+            System.out.println(mensajeApuesta);
             apuestas.add(mensajeApuesta);
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(frame, "Introduce un número válido en el campo de apuesta.");
@@ -212,18 +213,21 @@ public class Cliente_GUI {
 
             while (true) {
                 String leido = reader.readLine();
-                if (leido.equals("0")) {
-                    labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
-                    out.writeObject(apuestas); // Accede a apuestas desde la instancia
-                    out.flush();
-                    this.vaciarApuestas();
-
+                System.out.println(leido);
+                if(leido.equals("02")){
+                    labelTemporizador.setText("Tiempo Restante: 0 segundos");
                     if (dialogGanador != null && dialogGanador.isShowing()) {
                         dialogGanador.dispose();
                         dialogGanador = null;
                     }
-                } else if (leido.equals("20")) {
-                    labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
+                }
+                if (leido.equals("04")) {
+                    labelTemporizador.setText("Tiempo Restante: 0 segundos");
+                    out.writeObject(apuestas); // Accede a apuestas desde la instancia
+                    out.flush();
+                    this.vaciarApuestas();
+                } else if (leido.equals("S20")) {
+                    labelTemporizador.setText("Tiempo Restante: 20 segundos");
                     String numeroganador = reader.readLine();
                     dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
 
