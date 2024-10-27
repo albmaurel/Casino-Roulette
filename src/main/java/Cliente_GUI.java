@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.Socket;
@@ -150,6 +152,23 @@ public class Cliente_GUI {
         textFieldApuesta.setPreferredSize(new Dimension(100, 150)); // Ajuste del tamaño
 
         frame.setVisible(true);
+
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                // Enviar mensaje al servidor
+                try {
+                    if (out != null) {
+                        out.writeObject("X"); // Enviar el mensaje de cierre
+                        out.flush();
+                    }
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                } finally {
+                    frame.dispose(); // Cerrar la ventana
+                    System.exit(0); // Terminar el programa
+                }
+            }
+        });
     }
 
     private void manejarApuesta(String tipoApuesta) {
