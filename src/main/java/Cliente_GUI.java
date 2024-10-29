@@ -128,7 +128,7 @@ public class Cliente_GUI {
 
         // Panel para mostrar apuestas y resultados
         JPanel panelResultados = new JPanel(new BorderLayout());
-        textAreaApuestas = new JTextArea(" Apuestas realizadas:\n");
+        textAreaApuestas = new JTextArea("Apuestas realizadas:\n");
         textAreaApuestas.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textAreaApuestas);
         scrollPane.setPreferredSize(new Dimension(150, 300));
@@ -158,14 +158,14 @@ public class Cliente_GUI {
                 // Enviar mensaje al servidor
                 try {
                     if (out != null) {
-                        out.writeObject("X"); // Enviar el mensaje de cierre
+                        out.writeObject("X");
                         out.flush();
                     }
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 } finally {
-                    frame.dispose(); // Cerrar la ventana
-                    System.exit(0); // Terminar el programa
+                    frame.dispose();
+                    System.exit(0);
                 }
             }
         });
@@ -205,6 +205,9 @@ public class Cliente_GUI {
         this.apuestas.clear();
     }
 
+    private void vaciarPanelApuestas() {
+        textAreaApuestas.setText("Apuestas realizadas:\n");
+    }
     // Este método maneja la conexión y la recepción de datos
     public void iniciarConexion(String host, int puerto) {
         try (Socket socket = new Socket(host, puerto);
@@ -220,20 +223,25 @@ public class Cliente_GUI {
                         dialogGanador.dispose();
                         dialogGanador = null;
                     }
+                    this.vaciarPanelApuestas();
+                    frame.setEnabled(true);
+                    frame.requestFocus();
                 }
                 if (leido.equals("04")) {
                     labelTemporizador.setText("Tiempo Restante: 0 segundos");
-                    out.writeObject(apuestas); // Accede a apuestas desde la instancia
+                    out.writeObject(apuestas);
                     out.flush();
                     this.vaciarApuestas();
                 }
                 else if (leido.equals("S20")) {
                     String numeroganador = reader.readLine();
-                    dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
                     System.out.println(numeroganador);
                     String ganancias = reader.readLine();
                     System.out.println(ganancias);
-                    saldo += Integer.parseInt(ganancias); // Actualiza el saldo
+                    saldo += Integer.parseInt(ganancias);
+                    textFieldSaldo.setText(String.valueOf(saldo) + " $");
+                    dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");// Actualiza el saldo
+                    frame.setEnabled(false);
                 }
                 else {
                     labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
@@ -245,15 +253,24 @@ public class Cliente_GUI {
     }
 
     private JDialog mostrarPopup(String mensaje, String titulo) {
-        JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
         JDialog dialog = optionPane.createDialog(titulo);
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        dialog.setModal(false);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+            }
+        });
         dialog.setVisible(true);
+
         return dialog;
     }
 
+
     public static void main(String[] args) {
         Cliente_GUI clienteGUI = new Cliente_GUI();
-        clienteGUI.iniciarConexion("localhost", 55555); // Inicia la conexión
+        clienteGUI.iniciarConexion("localhost", 55555);
     }
 }
