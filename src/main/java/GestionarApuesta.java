@@ -7,6 +7,8 @@ public class GestionarApuesta implements Runnable{
     private Socket s;
     private int auxiliar=-1;
     private int ganancias;
+    private int contador;
+    ArrayList<String> apuestas=null;
     public GestionarApuesta(Socket socket){s=socket;ganancias=0;}
     @Override
     public void run()
@@ -17,46 +19,51 @@ public class GestionarApuesta implements Runnable{
             ObjectInputStream ois=new ObjectInputStream(s.getInputStream());
             while(true)
             {
-                if(auxiliar!=Servidor.getCont() && Servidor.getFase()==0)
+                contador=Servidor.getContador();
+                if(auxiliar!=contador)
                 {
-                    auxiliar=Servidor.getCont();
-                    if(auxiliar==0)
+                    auxiliar=Servidor.getContador();
+                    if(auxiliar==25)
                     {
-                        writer.write(auxiliar + "4\n");
+                        int res=auxiliar-25;
+                        writer.write(res + "4\n");
                         writer.flush();
-                    }else {
-                        writer.write(auxiliar + "\n");
-                        writer.flush();
-                    }
-                }
-                else if(auxiliar!=Servidor.getCont() && Servidor.getFase()==2)
-                {
-                    auxiliar=Servidor.getCont();
-                    if(auxiliar==0)
-                    {
+                    }else if(auxiliar==0){
                         writer.write(auxiliar + "2\n");
                         writer.flush();
-                    }else {
-                        writer.write(auxiliar + "\n");
-                        if(auxiliar==20)
-                        {
-                            writer.write("S"+auxiliar + "\n");
-                            writer.write(Servidor.getGanador() + "\n");
-                            writer.write(ganancias+"\n");
+                    }else if(auxiliar<=24 && auxiliar>20)
+                    {
+                        if(apuestas==null) {
+                            apuestas = (ArrayList<String>) ois.readObject();
+                            for (String apuesta : apuestas) {
+                                ganancias += calcular(apuesta);
+                                System.out.println(ganancias);
+                            }
                         }
+                    }
+                    else if(auxiliar==20)
+                    {
+                        apuestas=null;
+                        writer.write("S"+auxiliar + "\n");
+                        System.out.println("S"+auxiliar);
+                        writer.write(Servidor.getGanador() + "\n");
+                        System.out.println(Servidor.getGanador());
+                        writer.write(ganancias+"\n");
+                        System.out.println(ganancias);
+                        writer.flush();
+                    }
+                    else if(auxiliar>25)
+                    {
+                        int auxi=auxiliar-25;
+                        writer.write(auxi + "\n");
+                        writer.flush();
+                    }
+                    else
+                    {
+                        writer.write(auxiliar + "\n");
                         writer.flush();
                     }
                 }
-                else if(Servidor.getFase()==1)
-                {
-                    ArrayList<String> apuestas=(ArrayList<String>) ois.readObject();
-                    for(String apuesta:apuestas)
-                    {
-                        ganancias+=calcular(apuesta);
-                        System.out.println(ganancias);
-                    }
-                }
-                System.out.println("");
             }
         }
         catch(IOException e)
@@ -76,7 +83,7 @@ public class GestionarApuesta implements Runnable{
     private int calcular(String apuesta)
     {
         int ganador=Servidor.getGanador();
-        String color=Servidor.getColorG();
+        String color=Servidor.getColorGanador();
         String s1=apuesta.split(" ")[0];
         int valor=Integer.parseInt(apuesta.split(" ")[1]);
         if(s1.length()==1)

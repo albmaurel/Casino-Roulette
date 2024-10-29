@@ -230,8 +230,9 @@ public class Cliente_GUI {
                 else if (leido.equals("S20")) {
                     String numeroganador = reader.readLine();
                     dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
-
+                    System.out.println(numeroganador);
                     String ganancias = reader.readLine();
+                    System.out.println(ganancias);
                     saldo += Integer.parseInt(ganancias); // Actualiza el saldo
                 }
                 else {

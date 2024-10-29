@@ -15,45 +15,20 @@ public class Tempo extends TimerTask {
         Random rand = new Random();
         int ganador;
         String color;
-        if(Servidor.getFase()==0)
-        {
-            Servidor.decCont();
-            if(Servidor.getCont()==0)
-            {
-                Servidor.setFase(1);
-                Servidor.setCont(5);
-                ganador=rand.nextInt(0,37);
-                if(NUMEROS_ROJOS.contains(ganador))
-                {
-                    Servidor.setGanador("R",ganador);
-                }
-                else if(NUMEROS_NEGROS.contains(ganador))
-                {
-                    Servidor.setGanador("N",ganador);
-                }
-                else {
-                    Servidor.setGanador("0",ganador);
-                }
+        Servidor.setContador(Servidor.getContador() - 1);
+        if (Servidor.getContador() == 25) {
+            ganador = rand.nextInt(0, 37);
+            if (NUMEROS_ROJOS.contains(ganador)) {
+                Servidor.setGanador("R", ganador);
+            } else if (NUMEROS_NEGROS.contains(ganador)) {
+                Servidor.setGanador("N", ganador);
+            } else {
+                Servidor.setGanador("0", ganador);
             }
         }
-        else if(Servidor.getFase()==1)
-        {
-            Servidor.decCont();
-            if(Servidor.getCont()==0)
-            {
-                Servidor.setFase(2);
-                Servidor.setCont(20);
-            }
+        if (Servidor.getContador() == 0) {
+            Servidor.setContador(65);
         }
-        else
-        {
-            Servidor.decCont();
-            if(Servidor.getCont()==0)
-            {
-                Servidor.setFase(0);
-                Servidor.setCont(40);
-            }
-        }
-    }
 
+    }
 }
