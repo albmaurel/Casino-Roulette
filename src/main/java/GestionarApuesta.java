@@ -1,10 +1,13 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Set;
 
 public class GestionarApuesta implements Runnable{
     private Socket s;
+    private boolean logged=false;
+    private boolean seguir=true;
     private int auxiliar=-1;
     private int ganancias;
     private int contador;
@@ -17,7 +20,26 @@ public class GestionarApuesta implements Runnable{
         {
             BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(s.getOutputStream(),"UTF-8"));
             ObjectInputStream ois=new ObjectInputStream(s.getInputStream());
-            while(true)
+
+            while(!logged) {
+                ArrayList<String> leido = (ArrayList<String>) ois.readObject();
+                if (!Servidor.getMap().contains(leido.get(0))) {
+                    ArrayList<String> e = new ArrayList<>();
+                    e.add(leido.get(1));
+                    e.add("10000");
+                    Servidor.getMap().put(leido.get(0), e);
+                } else {
+                    ArrayList<String> datos = Servidor.getMap().get(leido.get(0));
+                    if (leido.get(0).equals(datos.get(0))) {
+                        writer.write("S\n");
+                        logged = true;
+                    } else {
+                        writer.write("N\n");
+                    }
+                    writer.flush();
+                }
+            }
+            while(seguir)
             {
                 contador=Servidor.getContador();
                 if(auxiliar!=contador)
@@ -50,6 +72,7 @@ public class GestionarApuesta implements Runnable{
                         System.out.println(Servidor.getGanador());
                         writer.write(ganancias+"\n");
                         System.out.println(ganancias);
+                        ganancias=0;
                         writer.flush();
                     }
                     else if(auxiliar>25)
@@ -68,10 +91,15 @@ public class GestionarApuesta implements Runnable{
         }
         catch(IOException e)
         {
-            e.printStackTrace();
+            try {
+                s.close();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
-        } finally
+        }
+        finally
         {
             try
             {s.close();}

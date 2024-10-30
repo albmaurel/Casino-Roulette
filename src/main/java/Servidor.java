@@ -12,13 +12,18 @@ public class Servidor {
     private static final ScheduledExecutorService temporizador = Executors.newScheduledThreadPool(1);
     private static final ExecutorService poolClientes = Executors.newCachedThreadPool();
     private static final ArrayList<GestionarApuesta> clientes = new ArrayList<>();
+    private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();
+
 
     public static void main(String[] args) {
         try (ServerSocket ss = new ServerSocket(PUERTO)) {
-            iniciarTemporizador();
             System.out.println("Servidor iniciado en el puerto " + PUERTO);
             while (true) {
                 Socket clienteSocket = ss.accept();
+                if(clientes.isEmpty())
+                {
+                    iniciarTemporizador();
+                }
                 GestionarApuesta cliente = new GestionarApuesta(clienteSocket);
                 clientes.add(cliente);
                 poolClientes.execute(cliente);
@@ -30,7 +35,10 @@ public class Servidor {
             temporizador.shutdown();
         }
     }
-
+    public static synchronized ConcurrentHashMap<String,ArrayList<String>> getMap()
+    {
+        return registrados;
+    }
     private static void iniciarTemporizador() {
         temporizador.scheduleAtFixedRate(new Tempo(), 0, 1, TimeUnit.SECONDS);
     }
