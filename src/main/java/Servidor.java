@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 
 public class Servidor {
     private static final int PUERTO = 55555;
+    private static long inicioCiclo;
     private static int contador = 65;
     private static int ganador;
     private static String colorGanador;
@@ -35,12 +36,20 @@ public class Servidor {
             temporizador.shutdown();
         }
     }
+    public static synchronized long getInicio()
+    {
+        return inicioCiclo;
+    }
+    public static synchronized void setInicio(long i)
+    {
+        inicioCiclo=i;
+    }
     public static synchronized ConcurrentHashMap<String,ArrayList<String>> getMap()
     {
         return registrados;
     }
     private static void iniciarTemporizador() {
-        temporizador.scheduleAtFixedRate(new Tempo(), 0, 1, TimeUnit.SECONDS);
+        temporizador.scheduleAtFixedRate(new Tempo(), 0, 65, TimeUnit.SECONDS);
     }
 
     // Métodos sincronizados para gestionar el estado del servidor
@@ -64,4 +73,5 @@ public class Servidor {
         ganador = numero;
         colorGanador = color;
     }
+
 }

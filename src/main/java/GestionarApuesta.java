@@ -39,55 +39,74 @@ public class GestionarApuesta implements Runnable{
                     writer.flush();
                 }
             }
-            while(seguir)
+            while (seguir)
             {
-                contador=Servidor.getContador();
-                if(auxiliar!=contador)
-                {
-                    auxiliar=Servidor.getContador();
-                    if(auxiliar==25)
-                    {
-                        int res=auxiliar-25;
-                        writer.write(res + "4\n");
-                        writer.flush();
-                    }else if(auxiliar==0){
-                        writer.write(auxiliar + "2\n");
-                        writer.flush();
-                    }else if(auxiliar<=24 && auxiliar>20)
-                    {
-                        if(apuestas==null) {
-                            apuestas = (ArrayList<String>) ois.readObject();
-                            for (String apuesta : apuestas) {
-                                ganancias += calcular(apuesta);
-                                System.out.println(ganancias);
-                            }
-                        }
-                    }
-                    else if(auxiliar==20)
-                    {
-                        apuestas=null;
-                        writer.write("S"+auxiliar + "\n");
-                        System.out.println("S"+auxiliar);
-                        writer.write(Servidor.getGanador() + "\n");
-                        System.out.println(Servidor.getGanador());
-                        writer.write(ganancias+"\n");
+                writer.write(""+Servidor.getInicio()+"\n");
+                writer.flush();
+                if(apuestas==null) {
+                    apuestas = (ArrayList<String>) ois.readObject();
+                    for (String apuesta : apuestas) {
+                        ganancias += calcular(apuesta);
                         System.out.println(ganancias);
-                        ganancias=0;
-                        writer.flush();
-                    }
-                    else if(auxiliar>25)
-                    {
-                        int auxi=auxiliar-25;
-                        writer.write(auxi + "\n");
-                        writer.flush();
-                    }
-                    else
-                    {
-                        writer.write(auxiliar + "\n");
-                        writer.flush();
                     }
                 }
+                writer.write(Servidor.getGanador() + "\n");
+                System.out.println(Servidor.getGanador());
+                writer.write(ganancias+"\n");
+                System.out.println(ganancias);
+                ganancias=0;
+                writer.flush();
             }
+
+//            while(seguir)
+//            {
+//                contador=Servidor.getContador();
+//                if(auxiliar!=contador)
+//                {
+//                    auxiliar=Servidor.getContador();
+//                    if(auxiliar==25)
+//                    {
+//                        int res=auxiliar-25;
+//                        writer.write(res + "4\n");
+//                        writer.flush();
+//                    }else if(auxiliar==0){
+//                        writer.write(auxiliar + "2\n");
+//                        writer.flush();
+//                    }else if(auxiliar<=24 && auxiliar>20)
+//                    {
+//                        if(apuestas==null) {
+//                            apuestas = (ArrayList<String>) ois.readObject();
+//                            for (String apuesta : apuestas) {
+//                                ganancias += calcular(apuesta);
+//                                System.out.println(ganancias);
+//                            }
+//                        }
+//                    }
+//                    else if(auxiliar==20)
+//                    {
+//                        apuestas=null;
+//                        writer.write("S"+auxiliar + "\n");
+//                        System.out.println("S"+auxiliar);
+//                        writer.write(Servidor.getGanador() + "\n");
+//                        System.out.println(Servidor.getGanador());
+//                        writer.write(ganancias+"\n");
+//                        System.out.println(ganancias);
+//                        ganancias=0;
+//                        writer.flush();
+//                    }
+//                    else if(auxiliar>25)
+//                    {
+//                        int auxi=auxiliar-25;
+//                        writer.write(auxi + "\n");
+//                        writer.flush();
+//                    }
+//                    else
+//                    {
+//                        writer.write(auxiliar + "\n");
+//                        writer.flush();
+//                    }
+//                }
+//            }
         }
         catch(IOException e)
         {
