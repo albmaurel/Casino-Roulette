@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
@@ -17,11 +19,10 @@ public class Cliente_GUI {
     private JTextArea textAreaApuestas;
     private JLabel labelTemporizador;
     private JDialog dialogGanador;
+    private Timer contadorTimer;
+    private long tiempoFinal;
 
     private int saldo = 10000;  // Saldo inicial
-    private Socket socket;
-    private ObjectOutputStream out;
-    private BufferedReader in;
     private ArrayList<String> apuestas = new ArrayList<>();
 
     // Conjuntos de números rojos y negros según la imagen
@@ -33,7 +34,114 @@ public class Cliente_GUI {
     );
 
     public Cliente_GUI() {
-        iniciarInterfaz();
+        mostrarLogin();
+    }
+
+    private void mostrarLogin() {
+        JFrame loginFrame = new JFrame("Login");
+        loginFrame.setSize(300, 200);
+        loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        loginFrame.setLayout(new BorderLayout(10, 10));
+
+        JPanel panelLogin = new JPanel();
+        panelLogin.setLayout(new GridLayout(4, 2, 10, 10));
+
+        panelLogin.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        JLabel labelUsuario = new JLabel("Usuario:");
+        JTextField textFieldUsuario = new JTextField();
+        JLabel labelContrasena = new JLabel("Contraseña:");
+        JPasswordField passwordField = new JPasswordField();
+        JButton btnIniciarSesion = new JButton("Iniciar Sesión");
+        JButton btnCrearUsuario = new JButton("Crear Usuario");
+
+        panelLogin.add(labelUsuario);
+        panelLogin.add(textFieldUsuario);
+        panelLogin.add(labelContrasena);
+        panelLogin.add(passwordField);
+
+        panelLogin.add(new JLabel());
+        panelLogin.add(new JLabel());
+
+        panelLogin.add(btnIniciarSesion);
+        panelLogin.add(btnCrearUsuario);
+
+        loginFrame.add(panelLogin, BorderLayout.CENTER);
+
+        loginFrame.setVisible(true);
+
+        btnIniciarSesion.addActionListener(e -> {
+            String usuario = textFieldUsuario.getText();
+            String contrasena = new String(passwordField.getPassword());
+
+            if (validarLogin(usuario, contrasena)) {
+                loginFrame.dispose();
+                iniciarInterfaz();
+            } else {
+                JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas, intente nuevamente.");
+            }
+        });
+        btnCrearUsuario.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String usuario = textFieldUsuario.getText();
+                String contrasena = new String(passwordField.getPassword());
+
+                // Llamamos al método de crear usuario
+                if (crearUsuario(usuario, contrasena)) {
+                    System.out.println("Usuario creado exitosamente");
+                    loginFrame.dispose();
+                    iniciarInterfaz();;
+                } else {
+                    JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+    }
+
+    private boolean validarLogin(String usuario, String contrasena) {
+        try (Socket socket = new Socket("localhost", 55555);
+                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+            out.writeObject("L "+ usuario + " " + contrasena);
+
+            String respuesta = in.readLine();
+
+            if (respuesta != null && respuesta.startsWith("S")) {
+                saldo = Integer.parseInt(respuesta.substring(1).trim());
+                return true;
+            }
+
+            // Si la respuesta es "I", el login es incorrecto
+            return false;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    private boolean crearUsuario(String usuario, String contrasena) {
+        try (Socket socket = new Socket("localhost", 55555);
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+            out.writeObject("C " + usuario + " " + contrasena);
+
+            String respuesta = in.readLine();
+
+            if (respuesta != null && respuesta.startsWith("S")) {
+                saldo = Integer.parseInt(respuesta.substring(1).trim());
+                return true;
+            }
+
+            return false;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private void iniciarInterfaz() {
@@ -136,7 +244,7 @@ public class Cliente_GUI {
         panelResultados.add(scrollPane, BorderLayout.CENTER);
 
         // Temporizador
-        labelTemporizador = new JLabel("Tiempo Restante: ");
+        labelTemporizador = new JLabel("Tiempo Restante: 55 segundos ");
         labelTemporizador.setPreferredSize(new Dimension(200, 40));
         labelTemporizador.setHorizontalAlignment(SwingConstants.CENTER);
         labelTemporizador.setVerticalAlignment(SwingConstants.CENTER);
@@ -154,13 +262,13 @@ public class Cliente_GUI {
 
         frame.setVisible(true);
 
-        frame.addWindowListener(new WindowAdapter() {
+        /*frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 // Enviar mensaje al servidor
                 try {
-                    if (out != null) {
-                        out.writeObject("X");
-                        out.flush();
+                    if (writer != null) {
+                        writer.writeObject("X");
+                        writer.flush();
                     }
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
@@ -169,7 +277,7 @@ public class Cliente_GUI {
                     System.exit(0);
                 }
             }
-        });
+        });*/
     }
 
     private void manejarApuesta(String tipoApuesta) {
@@ -216,42 +324,90 @@ public class Cliente_GUI {
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
             while (true) {
-                String leido = reader.readLine();
-                System.out.println(leido);
-                if(leido.equals("02")){
-                    labelTemporizador.setText("Tiempo Restante: 0 segundos");
-                    if (dialogGanador != null && dialogGanador.isShowing()) {
-                        dialogGanador.dispose();
-                        dialogGanador = null;
+                String leido = null;
+
+                if (reader.ready()) {
+                    leido = reader.readLine();
+                    System.out.println(leido);
+                }
+
+                if (leido != null) {
+                    long tiempoServidor = 0;
+                    if (leido.startsWith("T")) {
+                        vaciarApuestas();
+                        vaciarPanelApuestas();
+                        tiempoServidor = Long.parseLong(leido.substring(1));
+                        tiempoFinal = tiempoServidor + 55000;
+                        funcionaContador(out, reader);
                     }
-                    this.vaciarPanelApuestas();
-                    frame.setEnabled(true);
-                    frame.requestFocus();
-                }
-                if (leido.equals("04")) {
-                    labelTemporizador.setText("Tiempo Restante: 0 segundos");
-                    out.writeObject(apuestas);
-                    out.flush();
-                    this.vaciarApuestas();
-                }
-                else if (leido.equals("S20")) {
-                    String numeroganador = reader.readLine();
-                    System.out.println(numeroganador);
-                    String ganancias = reader.readLine();
-                    System.out.println(ganancias);
-                    saldo += Integer.parseInt(ganancias);
-                    textFieldSaldo.setText(String.valueOf(saldo) + " $");
-                    dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");// Actualiza el saldo
-                    frame.setEnabled(false);
-                }
-                else {
-                    labelTemporizador.setText("Tiempo Restante: " + leido + " segundos");
+                    if (leido.startsWith("N")) {
+                        try {
+                            String numeroganador = reader.readLine();
+                            String ganancias = reader.readLine();
+                            saldo += Integer.parseInt(ganancias);
+                            textFieldSaldo.setText(String.valueOf(saldo) + " $");
+                            dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
+                            frame.setEnabled(false);
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private void funcionaContador(ObjectOutputStream out,BufferedReader reader) {
+
+        if (contadorTimer != null && contadorTimer.isRunning()) {
+            contadorTimer.stop();
+        }
+
+        // Crear un Timer que se dispare cada segundo (1000 ms)
+        contadorTimer = new Timer(1000, new ActionListener() {
+            private boolean accion04Ejecutada = false;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                long tiempoActual = System.currentTimeMillis();
+                long tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
+
+                if (tiempoRestante > 0) {
+                    labelTemporizador.setText("Tiempo Restante: " + tiempoRestante + " segundos");
+
+                    if (tiempoRestante == 15 && !accion04Ejecutada) {
+                        accion04Ejecutada = true;
+                        try {
+                            out.writeObject(apuestas);
+                            out.flush();
+                            vaciarApuestas();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                } else {
+
+                    labelTemporizador.setText("Tiempo Restante: 0 segundos");
+                    contadorTimer.stop();
+
+
+                    if (dialogGanador != null && dialogGanador.isShowing()) {
+                        dialogGanador.dispose();
+                        dialogGanador = null;
+                    }
+                    vaciarPanelApuestas();
+                    frame.setEnabled(true);
+                    frame.requestFocus();
+                }
+            }
+        });
+
+        contadorTimer.start();
+    }
+
 
     private JDialog mostrarPopup(String mensaje, String titulo) {
         JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
