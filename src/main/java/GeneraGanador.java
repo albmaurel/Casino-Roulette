@@ -11,7 +11,7 @@ public class GeneraGanador extends TimerTask {
     );
     @Override
     public void run() {
-        Servidor.setInicio(System.currentTimeMillis());
+
         Random rand = new Random();
         int ganador;
         ganador = rand.nextInt(0, 37);

@@ -8,10 +8,9 @@ public class GestionarApuesta implements Runnable{
     private Socket s;
     private boolean logged=false;
     private boolean seguir=true;
-    private int auxiliar=-1;
     private int ganancias;
-    private int contador;
     ArrayList<String> apuestas=null;
+    private String usr;
     public GestionarApuesta(Socket socket){s=socket;ganancias=0;}
     @Override
     public void run()
@@ -22,91 +21,66 @@ public class GestionarApuesta implements Runnable{
             ObjectInputStream ois=new ObjectInputStream(s.getInputStream());
 
             while(!logged) {
-                ArrayList<String> leido = (ArrayList<String>) ois.readObject();
-                if (!Servidor.getMap().contains(leido.get(0))) {
-                    ArrayList<String> e = new ArrayList<>();
-                    e.add(leido.get(1));
-                    e.add("10000");
-                    Servidor.getMap().put(leido.get(0), e);
-                } else {
-                    ArrayList<String> datos = Servidor.getMap().get(leido.get(0));
-                    if (leido.get(0).equals(datos.get(0))) {
-                        writer.write("S\n");
+
+                String leido = (String) ois.readObject();
+                String aux=leido.split(" ")[0];
+                String usuario=leido.split(" ")[1];
+                String contrasena=leido.split(" ")[2];
+                if(aux.equals("C")) {
+                    if (!Servidor.getMap().contains(usuario)) {
+                        usr=usuario;
+                        ArrayList<String> e = new ArrayList<>();
+                        e.add(contrasena);
+                        e.add("10000");
+                        Servidor.getMap().put(usuario, e);
                         logged = true;
-                    } else {
-                        writer.write("N\n");
+                        writer.write("S10000\n");
+                        writer.flush();
                     }
-                    writer.flush();
+                    else
+                    {
+                        writer.write("I\n");
+                        writer.flush();
+                    }
+                }else {
+                    if (Servidor.getMap().contains(usuario)) {
+                        ArrayList<String> datos = Servidor.getMap().get(usuario);
+                        if (contrasena.equals(datos.get(0))) {
+                            usr=usuario;
+                            writer.write("S" + datos.get(1) + "\n");
+                            writer.flush();
+                            logged = true;
+                        }
+                    }
+                    else {
+                        writer.write("I\n");
+                        writer.flush();
+                    }
                 }
             }
             while (seguir)
             {
-                writer.write(""+Servidor.getInicio()+"\n");
+                writer.write("T"+(Servidor.getInicio()+55000)+"\n");
                 writer.flush();
-                if(apuestas==null) {
-                    apuestas = (ArrayList<String>) ois.readObject();
-                    for (String apuesta : apuestas) {
-                        ganancias += calcular(apuesta);
-                        System.out.println(ganancias);
-                    }
+                apuestas = (ArrayList<String>) ois.readObject();
+                for (String apuesta : apuestas) {
+                    ganancias += calcular(apuesta);
+                    System.out.println(ganancias);
                 }
-                writer.write(Servidor.getGanador() + "\n");
+                ArrayList<String> datos=Servidor.getMap().get(usr);
+                datos.set(1,(ganancias+datos.get(1))+"");
+                writer.write("N"+Servidor.getGanador() + "\n");
+                writer.flush();
                 System.out.println(Servidor.getGanador());
+
                 writer.write(ganancias+"\n");
+                writer.flush();
                 System.out.println(ganancias);
                 ganancias=0;
-                writer.flush();
+                apuestas=null;
+
             }
 
-//            while(seguir)
-//            {
-//                contador=Servidor.getContador();
-//                if(auxiliar!=contador)
-//                {
-//                    auxiliar=Servidor.getContador();
-//                    if(auxiliar==25)
-//                    {
-//                        int res=auxiliar-25;
-//                        writer.write(res + "4\n");
-//                        writer.flush();
-//                    }else if(auxiliar==0){
-//                        writer.write(auxiliar + "2\n");
-//                        writer.flush();
-//                    }else if(auxiliar<=24 && auxiliar>20)
-//                    {
-//                        if(apuestas==null) {
-//                            apuestas = (ArrayList<String>) ois.readObject();
-//                            for (String apuesta : apuestas) {
-//                                ganancias += calcular(apuesta);
-//                                System.out.println(ganancias);
-//                            }
-//                        }
-//                    }
-//                    else if(auxiliar==20)
-//                    {
-//                        apuestas=null;
-//                        writer.write("S"+auxiliar + "\n");
-//                        System.out.println("S"+auxiliar);
-//                        writer.write(Servidor.getGanador() + "\n");
-//                        System.out.println(Servidor.getGanador());
-//                        writer.write(ganancias+"\n");
-//                        System.out.println(ganancias);
-//                        ganancias=0;
-//                        writer.flush();
-//                    }
-//                    else if(auxiliar>25)
-//                    {
-//                        int auxi=auxiliar-25;
-//                        writer.write(auxi + "\n");
-//                        writer.flush();
-//                    }
-//                    else
-//                    {
-//                        writer.write(auxiliar + "\n");
-//                        writer.flush();
-//                    }
-//                }
-//            }
         }
         catch(IOException e)
         {
@@ -133,6 +107,9 @@ public class GestionarApuesta implements Runnable{
         String color=Servidor.getColorGanador();
         String s1=apuesta.split(" ")[0];
         int valor=Integer.parseInt(apuesta.split(" ")[1]);
+        ArrayList<String> datos=Servidor.getMap().get(usr);
+        datos.set(1,(Integer.parseInt(datos.get(1))-valor)+"");
+        Servidor.getMap().put(usr,datos);
         if(s1.length()==1)
         {
             if(s1.equals(color))

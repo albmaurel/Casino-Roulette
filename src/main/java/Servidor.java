@@ -7,10 +7,10 @@ import java.util.concurrent.*;
 public class Servidor {
     private static final int PUERTO = 55555;
     private static long inicioCiclo;
-    private static int contador = 65;
     private static int ganador;
     private static String colorGanador;
     private static final ScheduledExecutorService temporizador = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService generador = Executors.newScheduledThreadPool(1);
     private static final ExecutorService poolClientes = Executors.newCachedThreadPool();
     private static final ArrayList<GestionarApuesta> clientes = new ArrayList<>();
     private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();
@@ -49,17 +49,12 @@ public class Servidor {
         return registrados;
     }
     private static void iniciarTemporizador() {
-        temporizador.scheduleAtFixedRate(new Tempo(), 0, 65, TimeUnit.SECONDS);
+        temporizador.scheduleAtFixedRate(new Tempo(), 0, 55, TimeUnit.SECONDS);
+        generador.scheduleAtFixedRate(new GeneraGanador(),0,40, TimeUnit.SECONDS);
     }
 
-    // Métodos sincronizados para gestionar el estado del servidor
-    public static synchronized int getContador() {
-        return contador;
-    }
 
-    public static synchronized void setContador(int valor) {
-        contador = valor;
-    }
+
 
     public static synchronized int getGanador() {
         return ganador;
@@ -73,5 +68,6 @@ public class Servidor {
         ganador = numero;
         colorGanador = color;
     }
+
 
 }
