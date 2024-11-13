@@ -21,6 +21,10 @@ public class Cliente_GUI {
     private JDialog dialogGanador;
     private Timer contadorTimer;
     private long tiempoFinal;
+    private Socket juegoSocket;
+    private ObjectOutputStream juegoOut;
+    private BufferedReader juegoIn;
+    private boolean finalizado=false;
 
     private int saldo = 10000;  // Saldo inicial
     private ArrayList<String> apuestas = new ArrayList<>();
@@ -92,7 +96,9 @@ public class Cliente_GUI {
                 if (crearUsuario(usuario, contrasena)) {
                     System.out.println("Usuario creado exitosamente");
                     loginFrame.dispose();
-                    iniciarInterfaz();;
+                    iniciarInterfaz();
+                    if(finalizado){
+                        iniciarConexion();}
                 } else {
                     JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -101,13 +107,14 @@ public class Cliente_GUI {
     }
 
     private boolean validarLogin(String usuario, String contrasena) {
-        try (Socket socket = new Socket("localhost", 55555);
-                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        try{
+            juegoSocket = new Socket("localhost", 55555);
+            juegoOut = new ObjectOutputStream(juegoSocket.getOutputStream());
+            juegoIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
 
-            out.writeObject("L "+ usuario + " " + contrasena);
+            juegoOut.writeObject("L "+ usuario + " " + contrasena);
 
-            String respuesta = in.readLine();
+            String respuesta = juegoIn.readLine();
 
             if (respuesta != null && respuesta.startsWith("S")) {
                 saldo = Integer.parseInt(respuesta.substring(1).trim());
@@ -123,16 +130,18 @@ public class Cliente_GUI {
         }
     }
     private boolean crearUsuario(String usuario, String contrasena) {
-        try (Socket socket = new Socket("localhost", 55555);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        try {
+            juegoSocket = new Socket("localhost", 55555);
+            juegoOut = new ObjectOutputStream(juegoSocket.getOutputStream());
+            juegoIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
 
-            out.writeObject("C " + usuario + " " + contrasena);
+            juegoOut.writeObject("C " + usuario + " " + contrasena);
 
-            String respuesta = in.readLine();
+            String respuesta = juegoIn.readLine();
 
             if (respuesta != null && respuesta.startsWith("S")) {
                 saldo = Integer.parseInt(respuesta.substring(1).trim());
+                System.out.println(saldo);
                 return true;
             }
 
@@ -261,14 +270,14 @@ public class Cliente_GUI {
         textFieldApuesta.setPreferredSize(new Dimension(100, 150)); // Ajuste del tamaño
 
         frame.setVisible(true);
-
-        /*frame.addWindowListener(new WindowAdapter() {
+        finalizado=true;
+        frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 // Enviar mensaje al servidor
                 try {
-                    if (writer != null) {
-                        writer.writeObject("X");
-                        writer.flush();
+                    if (juegoOut != null) {
+                        juegoOut.writeObject("X");
+                        juegoOut.flush();
                     }
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
@@ -277,7 +286,7 @@ public class Cliente_GUI {
                     System.exit(0);
                 }
             }
-        });*/
+        });
     }
 
     private void manejarApuesta(String tipoApuesta) {
@@ -318,16 +327,13 @@ public class Cliente_GUI {
         textAreaApuestas.setText("Apuestas realizadas:\n");
     }
     // Este método maneja la conexión y la recepción de datos
-    public void iniciarConexion(String host, int puerto) {
-        try (Socket socket = new Socket(host, puerto);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
+    public void iniciarConexion() {
+        try {
             while (true) {
                 String leido = null;
-
-                if (reader.ready()) {
-                    leido = reader.readLine();
+                if (juegoIn.ready()) {
+                    System.out.println("hola");
+                    leido = juegoIn.readLine();
                     System.out.println(leido);
                 }
 
@@ -337,13 +343,14 @@ public class Cliente_GUI {
                         vaciarApuestas();
                         vaciarPanelApuestas();
                         tiempoServidor = Long.parseLong(leido.substring(1));
-                        tiempoFinal = tiempoServidor + 55000;
-                        funcionaContador(out, reader);
+                        tiempoFinal = tiempoServidor;
+                        System.out.println(tiempoFinal);
+                        funcionaContador(juegoOut , juegoIn);
                     }
                     if (leido.startsWith("N")) {
                         try {
-                            String numeroganador = reader.readLine();
-                            String ganancias = reader.readLine();
+                            String numeroganador = juegoIn.readLine();
+                            String ganancias = juegoIn.readLine();
                             saldo += Integer.parseInt(ganancias);
                             textFieldSaldo.setText(String.valueOf(saldo) + " $");
                             dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
@@ -359,7 +366,8 @@ public class Cliente_GUI {
         }
     }
 
-    private void funcionaContador(ObjectOutputStream out,BufferedReader reader) {
+
+    private void funcionaContador(ObjectOutputStream out, BufferedReader reader) {
 
         if (contadorTimer != null && contadorTimer.isRunning()) {
             contadorTimer.stop();
@@ -373,6 +381,7 @@ public class Cliente_GUI {
             public void actionPerformed(ActionEvent e) {
 
                 long tiempoActual = System.currentTimeMillis();
+                System.out.println(tiempoActual);
                 long tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
 
                 if (tiempoRestante > 0) {
@@ -389,10 +398,8 @@ public class Cliente_GUI {
                         }
                     }
                 } else {
-
                     labelTemporizador.setText("Tiempo Restante: 0 segundos");
                     contadorTimer.stop();
-
 
                     if (dialogGanador != null && dialogGanador.isShowing()) {
                         dialogGanador.dispose();
@@ -407,6 +414,7 @@ public class Cliente_GUI {
 
         contadorTimer.start();
     }
+
 
 
     private JDialog mostrarPopup(String mensaje, String titulo) {
@@ -428,6 +436,6 @@ public class Cliente_GUI {
 
     public static void main(String[] args) {
         Cliente_GUI clienteGUI = new Cliente_GUI();
-        clienteGUI.iniciarConexion("localhost", 55555);
+
     }
 }
