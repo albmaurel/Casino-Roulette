@@ -19,11 +19,17 @@ public class Servidor {
     public static void main(String[] args) {
         try (ServerSocket ss = new ServerSocket(PUERTO)) {
             System.out.println("Servidor iniciado en el puerto " + PUERTO);
+            long aux=System.currentTimeMillis();
             while (true) {
                 Socket clienteSocket = ss.accept();
                 if(clientes.isEmpty())
                 {
                     iniciarTemporizador();
+                    //Desfase auxiliar tiempo clientes
+                    while((aux+100)-System.currentTimeMillis()>0)
+                    {
+
+                    }
                 }
                 GestionarApuesta cliente = new GestionarApuesta(clienteSocket);
                 clientes.add(cliente);
@@ -49,7 +55,7 @@ public class Servidor {
         return registrados;
     }
     private static void iniciarTemporizador() {
-        temporizador.scheduleAtFixedRate(new Tempo(), 0, 55, TimeUnit.SECONDS);
+        temporizador.scheduleAtFixedRate(new Tempo(), 0, 55, TimeUnit.MILLISECONDS);
         generador.scheduleAtFixedRate(new GeneraGanador(),0,40, TimeUnit.SECONDS);
     }
 

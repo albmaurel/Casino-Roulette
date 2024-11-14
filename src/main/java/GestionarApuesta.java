@@ -58,8 +58,10 @@ public class GestionarApuesta implements Runnable{
                     }
                 }
             }
+            long aux;
             while (seguir)
             {
+                aux=Servidor.getInicio();
                 writer.write("T"+(Servidor.getInicio()+55000)+"\n");
                 writer.flush();
                 apuestas = (ArrayList<String>) ois.readObject();
@@ -78,7 +80,11 @@ public class GestionarApuesta implements Runnable{
                 System.out.println(ganancias);
                 ganancias=0;
                 apuestas=null;
+                // Para que te lo mande en el 0
+                while((aux+55000)-System.currentTimeMillis()>0)
+                {
 
+                }
             }
 
         }
