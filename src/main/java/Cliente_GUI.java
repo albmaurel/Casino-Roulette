@@ -98,7 +98,7 @@ public class Cliente_GUI {
                     loginFrame.dispose();
                     iniciarInterfaz();
                     if(finalizado){
-                        iniciarConexion();}
+                        startServerListenerThread();}
                 } else {
                     JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -271,7 +271,7 @@ public class Cliente_GUI {
 
         frame.setVisible(true);
         finalizado=true;
-        frame.addWindowListener(new WindowAdapter() {
+        /*frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 // Enviar mensaje al servidor
                 try {
@@ -286,7 +286,7 @@ public class Cliente_GUI {
                     System.exit(0);
                 }
             }
-        });
+        });*/
     }
 
     private void manejarApuesta(String tipoApuesta) {
@@ -324,45 +324,45 @@ public class Cliente_GUI {
     }
 
     private void vaciarPanelApuestas() {
-        textAreaApuestas.setText("Apuestas realizadas:\n");
+        SwingUtilities.invokeLater(() -> textAreaApuestas.setText("Apuestas realizadas:\n"));
     }
-    // Este método maneja la conexión y la recepción de datos
-    public void iniciarConexion() {
-        try {
-            while (true) {
-                String leido = null;
-                if (juegoIn.ready()) {
-                    System.out.println("hola");
-                    leido = juegoIn.readLine();
-                    System.out.println(leido);
-                }
-
-                if (leido != null) {
-                    long tiempoServidor = 0;
-                    if (leido.startsWith("T")) {
-                        vaciarApuestas();
-                        vaciarPanelApuestas();
-                        tiempoServidor = Long.parseLong(leido.substring(1));
-                        tiempoFinal = tiempoServidor;
-                        System.out.println(tiempoFinal);
-                        funcionaContador(juegoOut , juegoIn);
-                    }
-                    if (leido.startsWith("N")) {
-                        try {
-                            String numeroganador = juegoIn.readLine();
-                            String ganancias = juegoIn.readLine();
-                            saldo += Integer.parseInt(ganancias);
-                            textFieldSaldo.setText(String.valueOf(saldo) + " $");
-                            dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
-                            frame.setEnabled(false);
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
+    private void startServerListenerThread() {
+        Thread serverListenerThread = new Thread(() -> {
+            try {
+                while (true) {
+                    String leido = juegoIn.readLine();
+                    if (leido != null) {
+                        processServerMessage(leido);
                     }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        });
+        serverListenerThread.start();
+    }
+    private void processServerMessage(String leido) {
+        if (leido != null) {
+            long tiempoServidor = 0;
+            if (leido.startsWith("T")) {
+                vaciarApuestas();
+                vaciarPanelApuestas();
+                tiempoServidor = Long.parseLong(leido.substring(1));
+                tiempoFinal = tiempoServidor;
+                System.out.println(tiempoFinal);
+                funcionaContador(juegoOut , juegoIn);
+            }
+            if (leido.startsWith("N")) {
+                String numeroganador = (leido.substring(1));
+                SwingUtilities.invokeLater(() -> {dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");frame.setEnabled(false);});
+
+            }
+            if(leido.startsWith("G")){
+                String ganancias = (leido.substring(1));
+                saldo += Integer.parseInt(ganancias);
+                System.out.println(saldo);
+                SwingUtilities.invokeLater(() -> textFieldSaldo.setText(String.valueOf(saldo) + " $"));
+            }
         }
     }
 
@@ -381,7 +381,6 @@ public class Cliente_GUI {
             public void actionPerformed(ActionEvent e) {
 
                 long tiempoActual = System.currentTimeMillis();
-                System.out.println(tiempoActual);
                 long tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
 
                 if (tiempoRestante > 0) {
@@ -389,13 +388,7 @@ public class Cliente_GUI {
 
                     if (tiempoRestante == 15 && !accion04Ejecutada) {
                         accion04Ejecutada = true;
-                        try {
-                            out.writeObject(apuestas);
-                            out.flush();
-                            vaciarApuestas();
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
+                        envioapuestas(apuestas);
                     }
                 } else {
                     labelTemporizador.setText("Tiempo Restante: 0 segundos");
@@ -413,6 +406,18 @@ public class Cliente_GUI {
         });
 
         contadorTimer.start();
+    }
+    private void envioapuestas(ArrayList<String> apuestas){
+        Thread serverListenerThread = new Thread(() -> {
+            try {
+                juegoOut.writeObject(apuestas);
+                juegoOut.flush();
+                vaciarApuestas();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        serverListenerThread.start();
     }
 
 
@@ -435,7 +440,7 @@ public class Cliente_GUI {
 
 
     public static void main(String[] args) {
-        Cliente_GUI clienteGUI = new Cliente_GUI();
+        SwingUtilities.invokeLater(Cliente_GUI::new);
 
     }
 }

@@ -73,7 +73,7 @@ public class GestionarApuesta implements Runnable{
                 writer.flush();
                 System.out.println(Servidor.getGanador());
 
-                writer.write(ganancias+"\n");
+                writer.write("G"+ganancias+"\n");
                 writer.flush();
                 System.out.println(ganancias);
                 ganancias=0;
