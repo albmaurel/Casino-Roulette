@@ -6,6 +6,6 @@ import java.util.TimerTask;
 public class Tempo extends TimerTask {
     @Override
     public void run() {
-            Servidor.setInicio(System.currentTimeMillis());
+            Servidor.setFin(System.currentTimeMillis()+55000);
     }
 }

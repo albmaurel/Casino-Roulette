@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 
 public class Servidor {
     private static final int PUERTO = 55555;
-    private static long inicioCiclo;
+    private static long finCiclo;
     private static int ganador;
     private static String colorGanador;
     private static final ScheduledExecutorService temporizador = Executors.newScheduledThreadPool(1);
@@ -25,6 +25,8 @@ public class Servidor {
                 if(clientes.isEmpty())
                 {
                     iniciarTemporizador();
+                    System.out.println(System.currentTimeMillis());
+                    System.out.println(finCiclo);
                     //Desfase auxiliar tiempo clientes
                     while((aux+100)-System.currentTimeMillis()>0)
                     {
@@ -42,13 +44,13 @@ public class Servidor {
             temporizador.shutdown();
         }
     }
-    public static synchronized long getInicio()
+    public static synchronized long getFin()
     {
-        return inicioCiclo;
+        return finCiclo;
     }
-    public static synchronized void setInicio(long i)
+    public static synchronized void setFin(long i)
     {
-        inicioCiclo=i;
+        finCiclo=i;
     }
     public static synchronized ConcurrentHashMap<String,ArrayList<String>> getMap()
     {

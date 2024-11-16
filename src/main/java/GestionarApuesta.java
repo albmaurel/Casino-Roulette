@@ -61,8 +61,8 @@ public class GestionarApuesta implements Runnable{
             long aux;
             while (seguir)
             {
-                aux=Servidor.getInicio();
-                writer.write("T"+(Servidor.getInicio()+55000)+"\n");
+                aux=Servidor.getFin();
+                writer.write("T"+(Servidor.getFin())+"\n");
                 writer.flush();
                 apuestas = (ArrayList<String>) ois.readObject();
                 for (String apuesta : apuestas) {
@@ -81,7 +81,7 @@ public class GestionarApuesta implements Runnable{
                 ganancias=0;
                 apuestas=null;
                 // Para que te lo mande en el 0
-                while((aux+55000)-System.currentTimeMillis()>0)
+                while((aux)-System.currentTimeMillis()>0)
                 {
 
                 }
