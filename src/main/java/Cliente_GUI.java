@@ -25,6 +25,7 @@ public class Cliente_GUI {
     private ObjectOutputStream juegoOut;
     private BufferedReader juegoIn;
     private boolean finalizado=false;
+    private String usuario;
 
     private int saldo = 10000;  // Saldo inicial
     private ArrayList<String> apuestas = new ArrayList<>();
@@ -89,7 +90,7 @@ public class Cliente_GUI {
         btnCrearUsuario.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String usuario = textFieldUsuario.getText();
+                usuario = textFieldUsuario.getText();
                 String contrasena = new String(passwordField.getPassword());
 
                 // Llamamos al método de crear usuario
@@ -154,7 +155,7 @@ public class Cliente_GUI {
     }
 
     private void iniciarInterfaz() {
-        frame = new JFrame("Ruleta - Cliente");
+        frame = new JFrame("Ruleta - "+usuario);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 600);  // Ajuste del tamaño de la ventana
         frame.setLayout(new BorderLayout());
@@ -253,7 +254,7 @@ public class Cliente_GUI {
         panelResultados.add(scrollPane, BorderLayout.CENTER);
 
         // Temporizador
-        labelTemporizador = new JLabel("Tiempo Restante: 55 segundos ");
+        labelTemporizador = new JLabel(" ");
         labelTemporizador.setPreferredSize(new Dimension(200, 40));
         labelTemporizador.setHorizontalAlignment(SwingConstants.CENTER);
         labelTemporizador.setVerticalAlignment(SwingConstants.CENTER);
