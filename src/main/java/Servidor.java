@@ -19,20 +19,10 @@ public class Servidor {
     public static void main(String[] args) {
         try (ServerSocket ss = new ServerSocket(PUERTO)) {
             System.out.println("Servidor iniciado en el puerto " + PUERTO);
-            long aux=System.currentTimeMillis();
+
+
             while (true) {
                 Socket clienteSocket = ss.accept();
-                if(clientes.isEmpty())
-                {
-                    iniciarTemporizador();
-                    System.out.println(System.currentTimeMillis());
-                    System.out.println(finCiclo);
-                    //Desfase auxiliar tiempo clientes
-                    while((aux+100)-System.currentTimeMillis()>0)
-                    {
-
-                    }
-                }
                 GestionarApuesta cliente = new GestionarApuesta(clienteSocket);
                 clientes.add(cliente);
                 poolClientes.execute(cliente);
@@ -56,8 +46,12 @@ public class Servidor {
     {
         return registrados;
     }
-    private static void iniciarTemporizador() {
-        temporizador.scheduleAtFixedRate(new Tempo(), 0, 55, TimeUnit.MILLISECONDS);
+    public static synchronized  void actualizarUsuarios(String key, ArrayList<String> datos)
+    {
+        registrados.put(key, datos);
+    }
+    public static void iniciarTemporizador() {
+        temporizador.scheduleAtFixedRate(new Tempo(), 0, 55, TimeUnit.SECONDS);
         generador.scheduleAtFixedRate(new GeneraGanador(),0,40, TimeUnit.SECONDS);
     }
 
@@ -76,6 +70,5 @@ public class Servidor {
         ganador = numero;
         colorGanador = color;
     }
-
 
 }

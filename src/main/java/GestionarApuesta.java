@@ -15,6 +15,7 @@ public class GestionarApuesta implements Runnable{
     @Override
     public void run()
     {
+        long aux1=System.currentTimeMillis();
         try
         {
             BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(s.getOutputStream(),"UTF-8"));
@@ -27,23 +28,25 @@ public class GestionarApuesta implements Runnable{
                 String usuario=leido.split(" ")[1];
                 String contrasena=leido.split(" ")[2];
                 if(aux.equals("C")) {
-                    if (!Servidor.getMap().contains(usuario)) {
+
+                    if (!Servidor.getMap().keySet().contains(usuario)) {
                         usr=usuario;
                         ArrayList<String> e = new ArrayList<>();
                         e.add(contrasena);
                         e.add("10000");
-                        Servidor.getMap().put(usuario, e);
+                        Servidor.actualizarUsuarios(usuario,e);
                         logged = true;
                         writer.write("S10000\n");
                         writer.flush();
                     }
                     else
                     {
+
                         writer.write("I\n");
                         writer.flush();
                     }
                 }else {
-                    if (Servidor.getMap().contains(usuario)) {
+                    if (Servidor.getMap().keySet().contains(usuario)) {
                         ArrayList<String> datos = Servidor.getMap().get(usuario);
                         if (contrasena.equals(datos.get(0))) {
                             usr=usuario;
@@ -58,19 +61,29 @@ public class GestionarApuesta implements Runnable{
                     }
                 }
             }
+            if(Servidor.getMap().size()==1)
+            {
+                Servidor.iniciarTemporizador();
+                while((aux1+100)-System.currentTimeMillis()>0)
+                {
+
+                }
+            }
             long aux;
             while (seguir)
             {
+                System.out.println(usr+": "+Servidor.getFin());
                 aux=Servidor.getFin();
                 writer.write("T"+(Servidor.getFin())+"\n");
                 writer.flush();
                 apuestas = (ArrayList<String>) ois.readObject();
                 for (String apuesta : apuestas) {
                     ganancias += calcular(apuesta);
-                    System.out.println(ganancias);
+                    //System.out.println(ganancias);
                 }
                 ArrayList<String> datos=Servidor.getMap().get(usr);
-                datos.set(1,(ganancias+datos.get(1))+"");
+                datos.set(1,(ganancias+Integer.parseInt(datos.get(1)))+"");
+                Servidor.actualizarUsuarios(usr,datos);
                 writer.write("N"+Servidor.getGanador() + "\n");
                 writer.flush();
                 System.out.println(Servidor.getGanador());
@@ -81,7 +94,7 @@ public class GestionarApuesta implements Runnable{
                 ganancias=0;
                 apuestas=null;
                 // Para que te lo mande en el 0
-                while((aux)-System.currentTimeMillis()>0)
+                while((aux+100)-System.currentTimeMillis()>0)
                 {
 
                 }
@@ -139,7 +152,7 @@ public class GestionarApuesta implements Runnable{
             {
                 return 36*valor;
             }else{
-            return 0;
+                return 0;
             }
         }
     }
