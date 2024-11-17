@@ -83,6 +83,8 @@ public class Cliente_GUI {
             if (validarLogin(usuario, contrasena)) {
                 loginFrame.dispose();
                 iniciarInterfaz();
+                if(finalizado){
+                    startServerListenerThread();}
             } else {
                 JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas, intente nuevamente.");
             }
