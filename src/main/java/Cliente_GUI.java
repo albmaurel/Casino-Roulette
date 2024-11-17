@@ -86,7 +86,7 @@ public class Cliente_GUI {
                 if(finalizado){
                     startServerListenerThread();}
             } else {
-                JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas, intente nuevamente.");
+                JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas o Usuario conectado, intente nuevamente.");
             }
         });
         btnCrearUsuario.addActionListener(new ActionListener() {
