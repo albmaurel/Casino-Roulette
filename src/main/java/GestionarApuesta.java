@@ -34,6 +34,7 @@ public class GestionarApuesta implements Runnable{
                         ArrayList<String> e = new ArrayList<>();
                         e.add(contrasena);
                         e.add("10000");
+                        e.add("T");
                         Servidor.actualizarUsuarios(usuario,e);
                         logged = true;
                         writer.write("S10000\n");
@@ -48,11 +49,23 @@ public class GestionarApuesta implements Runnable{
                 }else {
                     if (Servidor.getMap().keySet().contains(usuario)) {
                         ArrayList<String> datos = Servidor.getMap().get(usuario);
-                        if (contrasena.equals(datos.get(0))) {
+                        if(datos.size()==3 && datos.get(2).equals("T"))
+                        {
+                            writer.write("O\n");
+                            writer.flush();
+                        }
+                        else if (contrasena.equals(datos.get(0))) {
                             usr=usuario;
                             writer.write("S" + datos.get(1) + "\n");
                             writer.flush();
+                            datos.add("T");
+                            Servidor.actualizarUsuarios(usuario,datos);
                             logged = true;
+                        }
+                        else
+                        {
+                            writer.write("I\n");
+                            writer.flush();
                         }
                     }
                     else {
@@ -104,6 +117,10 @@ public class GestionarApuesta implements Runnable{
         catch(IOException e)
         {
             try {
+                ArrayList<String> datos1 = Servidor.getMap().get(usr);
+                datos1.remove(2);
+                datos1.add("F");
+                Servidor.actualizarUsuarios(usr,datos1);
                 s.close();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
