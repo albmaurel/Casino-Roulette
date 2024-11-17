@@ -85,6 +85,8 @@ public class GestionarApuesta implements Runnable{
             long aux;
             while (seguir)
             {
+                ganancias=0;
+                apuestas=null;
                 System.out.println(usr+": "+Servidor.getFin());
                 aux=Servidor.getFin();
                 writer.write("T"+(Servidor.getFin())+"\n");
@@ -104,8 +106,6 @@ public class GestionarApuesta implements Runnable{
                 writer.write("G"+ganancias+"\n");
                 writer.flush();
                 System.out.println(ganancias);
-                ganancias=0;
-                apuestas=null;
                 // Para que te lo mande en el 0
                 while((aux+100)-System.currentTimeMillis()>0)
                 {
