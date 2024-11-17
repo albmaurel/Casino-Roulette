@@ -324,6 +324,9 @@ public class Cliente_GUI {
 
     private void vaciarApuestas(){
         this.apuestas.clear();
+        for (String apuesta : apuestas) {
+            System.out.println(apuesta);
+        }
     }
 
     private void vaciarPanelApuestas() {
@@ -415,6 +418,7 @@ public class Cliente_GUI {
             try {
                 juegoOut.writeObject(apuestas);
                 juegoOut.flush();
+                juegoOut.reset();
                 vaciarApuestas();
             } catch (IOException ex) {
                 ex.printStackTrace();
