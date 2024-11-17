@@ -367,7 +367,7 @@ public class Cliente_GUI {
                 String numeroganador = (leido.substring(1));
                 SwingUtilities.invokeLater(() -> {dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");frame.setEnabled(false);});
 
-            } //G5000, usuario ganancias, usuario ganancias.
+            } //G5000,usuario ganancias,usuario ganancias.
             if(leido.startsWith("G")){
                 String ganancias = (leido.substring(1));
                 saldo += Integer.parseInt(ganancias);
