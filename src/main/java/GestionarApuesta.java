@@ -51,7 +51,7 @@ public class GestionarApuesta implements Runnable{
                         ArrayList<String> datos = Servidor.getMap().get(usuario);
                         if(datos.size()==3 && datos.get(2).equals("T"))
                         {
-                            writer.write("O\n");
+                            writer.write("I\n");
                             writer.flush();
                         }
                         else if (contrasena.equals(datos.get(0))) {
@@ -93,6 +93,7 @@ public class GestionarApuesta implements Runnable{
                 writer.flush();
                 apuestas = (ArrayList<String>) ois.readObject();
                 for (String apuesta : apuestas) {
+                    System.out.println("Apuesta: "+apuesta);
                     ganancias += calcular(apuesta);
                     //System.out.println(ganancias);
                 }
