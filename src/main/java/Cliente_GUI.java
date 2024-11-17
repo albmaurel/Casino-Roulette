@@ -116,6 +116,8 @@ public class Cliente_GUI {
             juegoIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
 
             juegoOut.writeObject("L "+ usuario + " " + contrasena);
+            juegoOut.flush();
+            juegoOut.reset();
 
             String respuesta = juegoIn.readLine();
 
@@ -139,6 +141,8 @@ public class Cliente_GUI {
             juegoIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
 
             juegoOut.writeObject("C " + usuario + " " + contrasena);
+            juegoOut.flush();
+            juegoOut.reset();
 
             String respuesta = juegoIn.readLine();
 
@@ -281,6 +285,7 @@ public class Cliente_GUI {
                     if (juegoOut != null) {
                         juegoOut.writeObject("X");
                         juegoOut.flush();
+                        juegoOut.reset();
                     }
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
