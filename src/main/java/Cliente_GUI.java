@@ -1,34 +1,20 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
-import java.lang.reflect.Array;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Set;
 
 public class Cliente_GUI {
-
-    private JFrame frame;
-    private JTextField textFieldSaldo, textFieldApuesta, textFieldNumeroGanador;
-    private JTextArea textAreaApuestas;
-    private JLabel labelTemporizador;
-    private JDialog dialogGanador;
-    private Timer contadorTimer;
-    private long tiempoFinal;
-    private Socket juegoSocket;
-    private ObjectOutputStream juegoOut;
-    private BufferedReader juegoIn;
-    private boolean finalizado=false;
-    private String usuario;
-
-    private int saldo = 10000;  // Saldo inicial
-    private ArrayList<String> apuestas = new ArrayList<>();
 
     // Conjuntos de números rojos y negros según la imagen
     private static final Set<Integer> NUMEROS_ROJOS = Set.of(
@@ -37,9 +23,32 @@ public class Cliente_GUI {
     private static final Set<Integer> NUMEROS_NEGROS = Set.of(
             2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35
     );
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    int screenWidth = screenSize.width;
+    int screenHeight = screenSize.height;
+    private JFrame frame;
+    private JTextField textFieldSaldo, textFieldApuesta, textFieldNumeroGanador;
+    private JTextArea textAreaApuestas;
+    private JLabel labelTemporizador;
+    private JDialog dialogGanador;
+    private JDialog leaderboard;
+    private Timer contadorTimer;
+    private long tiempoFinal;
+    private Socket juegoSocket;
+    private ObjectOutputStream juegoOut;
+    private BufferedReader juegoIn;
+    private boolean finalizado = false;
+    private String usuario;
+    private int saldo = 10000;  // Saldo inicial
+    private ArrayList<String> apuestas = new ArrayList<>();
 
     public Cliente_GUI() {
         mostrarLogin();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(Cliente_GUI::new);
+
     }
 
     private void mostrarLogin() {
@@ -83,8 +92,9 @@ public class Cliente_GUI {
             if (validarLogin(usuario, contrasena)) {
                 loginFrame.dispose();
                 iniciarInterfaz();
-                if(finalizado){
-                    startServerListenerThread();}
+                if (finalizado) {
+                    startServerListenerThread();
+                }
             } else {
                 JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas o Usuario conectado, intente nuevamente.");
             }
@@ -100,8 +110,9 @@ public class Cliente_GUI {
                     System.out.println("Usuario creado exitosamente");
                     loginFrame.dispose();
                     iniciarInterfaz();
-                    if(finalizado){
-                        startServerListenerThread();}
+                    if (finalizado) {
+                        startServerListenerThread();
+                    }
                 } else {
                     JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -110,12 +121,12 @@ public class Cliente_GUI {
     }
 
     private boolean validarLogin(String usuario, String contrasena) {
-        try{
+        try {
             juegoSocket = new Socket("localhost", 55555);
             juegoOut = new ObjectOutputStream(juegoSocket.getOutputStream());
             juegoIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
 
-            juegoOut.writeObject("L "+ usuario + " " + contrasena);
+            juegoOut.writeObject("L " + usuario + " " + contrasena);
             juegoOut.flush();
             juegoOut.reset();
 
@@ -134,6 +145,7 @@ public class Cliente_GUI {
             return false;
         }
     }
+
     private boolean crearUsuario(String usuario, String contrasena) {
         try {
             juegoSocket = new Socket("localhost", 55555);
@@ -161,7 +173,7 @@ public class Cliente_GUI {
     }
 
     private void iniciarInterfaz() {
-        frame = new JFrame("Ruleta - "+usuario);
+        frame = new JFrame("Ruleta - " + usuario);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 600);  // Ajuste del tamaño de la ventana
         frame.setLayout(new BorderLayout());
@@ -238,7 +250,7 @@ public class Cliente_GUI {
         JLabel labelSaldo = new JLabel("Saldo");
         labelSaldo.setHorizontalAlignment(SwingConstants.CENTER);
         panelSaldo.add(labelSaldo);
-        textFieldSaldo = new JTextField(String.valueOf(saldo)+" $");
+        textFieldSaldo = new JTextField(String.valueOf(saldo) + " $");
         textFieldSaldo.setEditable(false);
         textFieldSaldo.setHorizontalAlignment(SwingConstants.CENTER);
         panelSaldo.add(textFieldSaldo);
@@ -277,7 +289,7 @@ public class Cliente_GUI {
         textFieldApuesta.setPreferredSize(new Dimension(100, 150)); // Ajuste del tamaño
 
         frame.setVisible(true);
-        finalizado=true;
+        finalizado = true;
         /*frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 // Enviar mensaje al servidor
@@ -307,10 +319,10 @@ public class Cliente_GUI {
 
             // Descontar la apuesta del saldo
             saldo -= cantidad;
-            textFieldSaldo.setText(String.valueOf(saldo)+" $");
+            textFieldSaldo.setText(String.valueOf(saldo) + " $");
 
             // Guardar y mostrar la apuesta realizada con el nombre completo
-            String mensajeApuesta = tipoApuesta + ": " + cantidad+ " $"+"\n";
+            String mensajeApuesta = tipoApuesta + ": " + cantidad + " $" + "\n";
             textAreaApuestas.append(mensajeApuesta);
 
             if (tipoApuesta.startsWith("Numero")) {
@@ -327,7 +339,7 @@ public class Cliente_GUI {
         }
     }
 
-    private void vaciarApuestas(){
+    private void vaciarApuestas() {
         this.apuestas.clear();
         for (String apuesta : apuestas) {
             System.out.println(apuesta);
@@ -337,6 +349,7 @@ public class Cliente_GUI {
     private void vaciarPanelApuestas() {
         SwingUtilities.invokeLater(() -> textAreaApuestas.setText("Apuestas realizadas:\n"));
     }
+
     private void startServerListenerThread() {
         Thread serverListenerThread = new Thread(() -> {
             try {
@@ -352,6 +365,7 @@ public class Cliente_GUI {
         });
         serverListenerThread.start();
     }
+
     private void processServerMessage(String leido) {
         if (leido != null) {
             long tiempoServidor = 0;
@@ -361,22 +375,26 @@ public class Cliente_GUI {
                 tiempoServidor = Long.parseLong(leido.substring(1));
                 tiempoFinal = tiempoServidor;
                 System.out.println(tiempoFinal);
-                funcionaContador(juegoOut , juegoIn);
+                funcionaContador(juegoOut, juegoIn);
             }
             if (leido.startsWith("N")) {
                 String numeroganador = (leido.substring(1));
-                SwingUtilities.invokeLater(() -> {dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");frame.setEnabled(false);});
+                SwingUtilities.invokeLater(() -> {
+                    dialogGanador = mostrarPopup("El número ganador es: " + numeroganador, "Número Ganador");
+                    frame.setEnabled(false);
+                });
 
             } //G5000,usuario ganancias,usuario ganancias.
-            if(leido.startsWith("G")){
-                String ganancias = (leido.substring(1));
+            if (leido.startsWith("G")) {
+                String ganancias = leido.substring(1);
+                //String ganancias = leido.substring(1, leido.indexOf(","));
                 saldo += Integer.parseInt(ganancias);
-                System.out.println(saldo);
+                System.out.println("Saldo actualizado: " + saldo);
                 SwingUtilities.invokeLater(() -> textFieldSaldo.setText(String.valueOf(saldo) + " $"));
+                SwingUtilities.invokeLater(() -> leaderboard = mostrarLeaderboard(leido));
             }
         }
     }
-
 
     private void funcionaContador(ObjectOutputStream out, BufferedReader reader) {
 
@@ -409,7 +427,12 @@ public class Cliente_GUI {
                         dialogGanador.dispose();
                         dialogGanador = null;
                     }
+                    if (leaderboard != null && leaderboard.isShowing()) {
+                        leaderboard.dispose();
+                        leaderboard = null;
+                    }
                     vaciarPanelApuestas();
+                    vaciarApuestas();
                     frame.setEnabled(true);
                     frame.requestFocus();
                 }
@@ -418,7 +441,8 @@ public class Cliente_GUI {
 
         contadorTimer.start();
     }
-    private void envioapuestas(ArrayList<String> apuestas){
+
+    private void envioapuestas(ArrayList<String> apuestas) {
         Thread serverListenerThread = new Thread(() -> {
             try {
                 juegoOut.writeObject(apuestas);
@@ -432,8 +456,6 @@ public class Cliente_GUI {
         serverListenerThread.start();
     }
 
-
-
     private JDialog mostrarPopup(String mensaje, String titulo) {
         JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
         JDialog dialog = optionPane.createDialog(titulo);
@@ -445,14 +467,100 @@ public class Cliente_GUI {
             public void windowClosing(WindowEvent e) {
             }
         });
+        int popupWidth = dialog.getWidth();
+        int popupHeight = dialog.getHeight();
+        int popupX = (screenWidth / 2) - popupWidth - 10;
+        int popupY = (screenHeight / 2) - (popupHeight / 2);
+        dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
 
         return dialog;
     }
 
+    private JDialog mostrarLeaderboard(String leido) {
+        leido = "G5000,usuario1 15000,usuario2 10000,usuario3 5000,usuario4 2200,usuario5 1000,usuario6 500";
+        // Procesar la parte del leaderboard
+        String leaderboardData = leido.substring(leido.indexOf(",") + 1); // Parte después de "G5000,"
+        String[] usuarios = leaderboardData.split(","); // Dividir por usuarios
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(Cliente_GUI::new);
+        // Crear una lista para la tabla
+        java.util.List<String[]> leaderboardList = new ArrayList<>();
+        int rank = 1; // Inicia el ranking
+        for (String usuario : usuarios) {
+            String[] parts = usuario.split(" ");
+            if (parts.length == 2) {
+                leaderboardList.add(new String[]{rank + "º", parts[0], parts[1]});
+                rank++;
+            }
+        }
+        // Crear y mostrar el leaderboard en una ventana personalizada
 
+        // Columnas de la tabla
+        String[] columnNames = {"Orden", "Usuario", "Ganancias ($)"};
+        // Datos de la tabla
+        String[][] data = leaderboardList.toArray(new String[0][]);
+
+        // Crear la tabla
+        JTable table = new JTable(data, columnNames);
+        table.setEnabled(false); // Deshabilitar edición
+        table.setFont(new Font("Arial", Font.PLAIN, 14)); // Fuente
+        table.setRowHeight(30); // Altura de fila
+
+        // Centrar contenido de la tabla
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                // Aplicar color según la posición
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) { // No sobrescribir selección
+                    if (row == 0) c.setBackground(new Color(255, 215, 0)); // Oro
+                    else if (row == 1) c.setBackground(new Color(192, 192, 192)); // Plata
+                    else if (row == 2) c.setBackground(new Color(184, 115, 51)); // Bronce
+                    else c.setBackground(Color.WHITE); // Resto
+                }
+                setHorizontalAlignment(SwingConstants.CENTER); // Centrar contenido
+                return c;
+            }
+        };
+
+        // Asignar renderizador a todas las columnas
+        for (int column = 0; column < table.getColumnCount(); column++) {
+            table.getColumnModel().getColumn(column).setCellRenderer(centerRenderer);
+        }
+
+        // Ajustar el ancho de las columnas
+        TableColumnModel columnModel = table.getColumnModel();
+        columnModel.getColumn(0).setPreferredWidth(50); // Orden
+        columnModel.getColumn(1).setPreferredWidth(100); // Usuario
+        columnModel.getColumn(2).setPreferredWidth(100); // Ganancias
+
+        // Crear un JScrollPane para manejar contenido grande
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Márgenes
+
+        // Crear un JDialog en lugar de JOptionPane
+        JDialog dialog = new JDialog((Frame) null, "Leaderboard", true);
+        dialog.setModal(false);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+            }
+        });
+        dialog.setLayout(new BorderLayout());
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        // Ajustar tamaño dinámico según el contenido
+        int dialogHeight = Math.min(400, leaderboardList.size() * 40 + 50); // Máximo 400px
+        dialog.setSize(300, dialogHeight);
+        dialog.setLocationRelativeTo(null); // Centrar en pantalla
+        dialog.setVisible(true); // Mostrar la ventana
+        int leaderboardWidth = dialog.getWidth();
+        int leaderboardHeight = dialog.getHeight();
+        int leaderboardX = (screenWidth / 2) + 10; // Centrar a la derecha
+        int leaderboardY = (screenHeight / 2) - (leaderboardHeight / 2); // Centrar verticalmente
+        dialog.setLocation(leaderboardX, leaderboardY);
+
+        return dialog;
     }
 }
