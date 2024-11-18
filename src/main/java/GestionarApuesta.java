@@ -100,11 +100,22 @@ public class GestionarApuesta implements Runnable{
                 ArrayList<String> datos=Servidor.getMap().get(usr);
                 datos.set(1,(ganancias+Integer.parseInt(datos.get(1)))+"");
                 Servidor.actualizarUsuarios(usr,datos);
+                Servidor.actualizarRank(usr,ganancias);
+
+
                 writer.write("N"+Servidor.getGanador() + "\n");
                 writer.flush();
                 System.out.println(Servidor.getGanador());
-
-                writer.write("G"+ganancias+"\n");
+                String res="";
+                res="G"+ganancias;
+                Servidor.orderRank();
+                for(String str: Servidor.getRanked())
+                {
+                    res+=","+str+" "+Servidor.getRank().get(str);
+                }
+                res+="\n";
+                System.out.println(res);
+                writer.write(res);
                 writer.flush();
                 System.out.println(ganancias);
                 // Para que te lo mande en el 0

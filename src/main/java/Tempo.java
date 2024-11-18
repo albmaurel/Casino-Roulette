@@ -7,5 +7,6 @@ public class Tempo extends TimerTask {
     @Override
     public void run() {
             Servidor.setFin(System.currentTimeMillis()+55000);
+            Servidor.resetRank();
     }
 }

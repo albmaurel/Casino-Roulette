@@ -386,8 +386,8 @@ public class Cliente_GUI {
 
             } //G5000,usuario ganancias,usuario ganancias.
             if (leido.startsWith("G")) {
-                String ganancias = leido.substring(1);
-                //String ganancias = leido.substring(1, leido.indexOf(","));
+               //String ganancias = leido.substring(1);
+                String ganancias = leido.substring(1, leido.indexOf(","));
                 saldo += Integer.parseInt(ganancias);
                 System.out.println("Saldo actualizado: " + saldo);
                 SwingUtilities.invokeLater(() -> textFieldSaldo.setText(String.valueOf(saldo) + " $"));
@@ -478,7 +478,7 @@ public class Cliente_GUI {
     }
 
     private JDialog mostrarLeaderboard(String leido) {
-        leido = "G5000,usuario1 15000,usuario2 10000,usuario3 5000,usuario4 2200,usuario5 1000,usuario6 500";
+        //leido = "G5000,usuario1 15000,usuario2 10000,usuario3 5000,usuario4 2200,usuario5 1000,usuario6 500";
         // Procesar la parte del leaderboard
         String leaderboardData = leido.substring(leido.indexOf(",") + 1); // Parte después de "G5000,"
         String[] usuarios = leaderboardData.split(","); // Dividir por usuarios

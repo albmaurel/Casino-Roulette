@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ public class Servidor {
     private static final ExecutorService poolClientes = Executors.newCachedThreadPool();
     private static final ArrayList<GestionarApuesta> clientes = new ArrayList<>();
     private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Integer> rank= new ConcurrentHashMap<>();
+    private static ArrayList<String> ranked= new ArrayList<>();
 
 
     public static void main(String[] args) {
@@ -50,9 +53,44 @@ public class Servidor {
     {
         registrados.put(key, datos);
     }
+    public static synchronized ConcurrentHashMap<String,Integer> getRank()
+    {
+        return rank;
+    }
+    public static synchronized  void actualizarRank(String key, int a)
+    {
+        rank.put(key, a);
+    }
+    public static synchronized void resetRank()
+    {
+        rank.clear();
+    }
+
+    public static void orderRank()
+    {
+        ArrayList<String> lista=new ArrayList<>();
+        int menores=0;
+        for(String s:rank.keySet())
+        {
+            for(String t:rank.keySet())
+            {
+                if(rank.get(s)>rank.get(t))
+                {menores++;}
+            }
+            lista.add(menores,s);
+            menores=0;
+        }
+        ranked=lista;
+
+    }
+    public static synchronized ArrayList<String> getRanked()
+    {
+        return ranked;
+    }
     public static void iniciarTemporizador() {
         temporizador.scheduleAtFixedRate(new Tempo(), 0, 55, TimeUnit.SECONDS);
-        generador.scheduleAtFixedRate(new GeneraGanador(),0,40, TimeUnit.SECONDS);
+        generador.scheduleAtFixedRate(new GeneraGanador(),0,55, TimeUnit.SECONDS);
+
     }
 
 
