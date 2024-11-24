@@ -16,11 +16,11 @@ public class GeneraGanador extends TimerTask {
         int ganador;
         ganador = rand.nextInt(0, 37);
         if (NUMEROS_ROJOS.contains(ganador)) {
-                Servidor.setGanador("R", ganador);
+            ServidorRuleta.setGanador("R", ganador);
         } else if (NUMEROS_NEGROS.contains(ganador)) {
-                Servidor.setGanador("N", ganador);
+            ServidorRuleta.setGanador("N", ganador);
         } else {
-                Servidor.setGanador("0", ganador);
+            ServidorRuleta.setGanador("O", ganador);
         }
     }
 }

@@ -18,7 +18,7 @@ public class clienteprueba {
                 System.out.println(leido);
             }
 
-            } catch (UnknownHostException e) {
+        } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);

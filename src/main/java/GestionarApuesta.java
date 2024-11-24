@@ -1,3 +1,4 @@
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -10,6 +11,7 @@ public class GestionarApuesta implements Runnable{
     private boolean seguir=true;
     private int ganancias;
     ArrayList<String> apuestas=null;
+    private boolean primera=false;
     private String usr;
     public GestionarApuesta(Socket socket){s=socket;ganancias=0;}
     @Override
@@ -29,13 +31,13 @@ public class GestionarApuesta implements Runnable{
                 String contrasena=leido.split(" ")[2];
                 if(aux.equals("C")) {
 
-                    if (!Servidor.getMap().keySet().contains(usuario)) {
+                    if (!ServidorRuleta.getMap().keySet().contains(usuario)) {
                         usr=usuario;
                         ArrayList<String> e = new ArrayList<>();
                         e.add(contrasena);
                         e.add("10000");
                         e.add("T");
-                        Servidor.actualizarUsuarios(usuario,e);
+                        ServidorRuleta.actualizarUsuarios(usuario,e);
                         logged = true;
                         writer.write("S10000\n");
                         writer.flush();
@@ -47,8 +49,8 @@ public class GestionarApuesta implements Runnable{
                         writer.flush();
                     }
                 }else {
-                    if (Servidor.getMap().keySet().contains(usuario)) {
-                        ArrayList<String> datos = Servidor.getMap().get(usuario);
+                    if (ServidorRuleta.getMap().keySet().contains(usuario)) {
+                        ArrayList<String> datos = ServidorRuleta.getMap().get(usuario);
                         if(datos.size()==3 && datos.get(2).equals("T"))
                         {
                             writer.write("I\n");
@@ -59,7 +61,7 @@ public class GestionarApuesta implements Runnable{
                             writer.write("S" + datos.get(1) + "\n");
                             writer.flush();
                             datos.add("T");
-                            Servidor.actualizarUsuarios(usuario,datos);
+                            ServidorRuleta.actualizarUsuarios(usuario,datos);
                             logged = true;
                         }
                         else
@@ -74,12 +76,16 @@ public class GestionarApuesta implements Runnable{
                     }
                 }
             }
-            if(Servidor.getMap().size()==1)
+            if(ServidorRuleta.getMap().size()==1)
             {
-                Servidor.iniciarTemporizador();
-                while((aux1+100)-System.currentTimeMillis()>0)
-                {
-
+                ServidorRuleta.iniciarTemporizador();
+                long waitTime = aux1 + 100 - System.currentTimeMillis();
+                if (waitTime > 0) {
+                    try {
+                        Thread.sleep(waitTime);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             long aux;
@@ -87,41 +93,50 @@ public class GestionarApuesta implements Runnable{
             {
                 ganancias=0;
                 apuestas=null;
-                System.out.println(usr+": "+Servidor.getFin());
-                aux=Servidor.getFin();
-                writer.write("T"+(Servidor.getFin())+"\n");
-                writer.flush();
+                if(primera==false) {
+                    System.out.println(usr+": "+ServidorRuleta.getFin());
+                    aux=ServidorRuleta.getFin();
+                    writer.write("T"+(ServidorRuleta.getFin())+"\n");
+                    writer.flush();
+                    primera=true;
+                }
                 apuestas = (ArrayList<String>) ois.readObject();
                 for (String apuesta : apuestas) {
                     System.out.println("Apuesta: "+apuesta);
                     ganancias += calcular(apuesta);
                     //System.out.println(ganancias);
                 }
-                ArrayList<String> datos=Servidor.getMap().get(usr);
+                ArrayList<String> datos=ServidorRuleta.getMap().get(usr);
                 datos.set(1,(ganancias+Integer.parseInt(datos.get(1)))+"");
-                Servidor.actualizarUsuarios(usr,datos);
-                Servidor.actualizarRank(usr,ganancias);
+                ServidorRuleta.actualizarUsuarios(usr,datos);
+                ServidorRuleta.actualizarRank(usr,ganancias);
 
 
-                writer.write("N"+Servidor.getGanador() + "\n");
+                writer.write("N"+ServidorRuleta.getGanador() + "\n");
                 writer.flush();
-                System.out.println(Servidor.getGanador());
-                String res="";
-                res="G"+ganancias;
-                Servidor.orderRank();
-                for(String str: Servidor.getRanked())
-                {
-                    res+=","+str+" "+Servidor.getRank().get(str);
+                System.out.println(ServidorRuleta.getGanador());
+                String res = "G" + ganancias;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                res+="\n";
-                System.out.println(res);
+
+                String leaderboard = ServidorRuleta.generateLeaderboard();
+                res += "," + leaderboard;
+                res += "\n";
                 writer.write(res);
                 writer.flush();
+                System.out.println(res);
                 System.out.println(ganancias);
                 // Para que te lo mande en el 0
-                while((aux+100)-System.currentTimeMillis()>0)
-                {
-
+                long waitTime = aux1 + 100 - System.currentTimeMillis()+1000;
+                if (waitTime > 0) {
+                    try {
+                        Thread.sleep(waitTime);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -129,10 +144,10 @@ public class GestionarApuesta implements Runnable{
         catch(IOException e)
         {
             try {
-                ArrayList<String> datos1 = Servidor.getMap().get(usr);
+                ArrayList<String> datos1 = ServidorRuleta.getMap().get(usr);
                 datos1.remove(2);
                 datos1.add("F");
-                Servidor.actualizarUsuarios(usr,datos1);
+                ServidorRuleta.actualizarUsuarios(usr,datos1);
                 s.close();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -151,13 +166,13 @@ public class GestionarApuesta implements Runnable{
     }
     private int calcular(String apuesta)
     {
-        int ganador=Servidor.getGanador();
-        String color=Servidor.getColorGanador();
+        int ganador=ServidorRuleta.getGanador();
+        String color=ServidorRuleta.getColorGanador();
         String s1=apuesta.split(" ")[0];
         int valor=Integer.parseInt(apuesta.split(" ")[1]);
-        ArrayList<String> datos=Servidor.getMap().get(usr);
+        ArrayList<String> datos=ServidorRuleta.getMap().get(usr);
         datos.set(1,(Integer.parseInt(datos.get(1))-valor)+"");
-        Servidor.getMap().put(usr,datos);
+        ServidorRuleta.getMap().put(usr,datos);
         if(s1.length()==1)
         {
             if(s1.equals(color))

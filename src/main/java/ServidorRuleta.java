@@ -1,14 +1,18 @@
+
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-public class Servidor {
-    private static final int PUERTO = 55555;
+public class ServidorRuleta implements Runnable{
+    private final String id;
+    private final int puerto;
     private static long finCiclo;
     private static int ganador;
     private static String colorGanador;
@@ -19,11 +23,15 @@ public class Servidor {
     private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();
     private static ConcurrentHashMap<String, Integer> rank= new ConcurrentHashMap<>();
     private static ArrayList<String> ranked= new ArrayList<>();
-
-
-    public static void main(String[] args) {
-        try (ServerSocket ss = new ServerSocket(PUERTO)) {
-            System.out.println("Servidor iniciado en el puerto " + PUERTO);
+    public ServidorRuleta(String id, int puerto)
+    {
+        this.id=id;
+        this.puerto=puerto;
+    }
+    @Override
+    public void run() {
+        try (ServerSocket ss = new ServerSocket(puerto)) {
+            System.out.println("Servidor ruleta iniciado en el puerto " + puerto);
 
 
             while (true) {
@@ -68,22 +76,19 @@ public class Servidor {
         rank.clear();
     }
 
-    public static void orderRank()
-    {
-        ArrayList<String> lista=new ArrayList<>();
-        int menores=0;
-        for(String s:rank.keySet())
-        {
-            for(String t:rank.keySet())
-            {
-                if(rank.get(s)>rank.get(t))
-                {menores++;}
-            }
-            lista.add(menores,s);
-            menores=0;
-        }
-        ranked=lista;
+    public static synchronized String generateLeaderboard() {
+        orderRank(); // Actualiza la lista ordenada
+        return ranked.stream()
+                .map(entry -> entry.split(" ")[0] + " " + entry.split(" ")[1]) // Formato "usuario ganancias"
+                .reduce("", (acc, entry) -> acc + "," + entry)
+                .substring(1); // Elimina la coma inicial
+    }
 
+    public static synchronized void orderRank() {
+        ranked = rank.entrySet().stream()
+                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue())) // Orden descendente
+                .map(e -> e.getKey() + " " + e.getValue()) // Formato "usuario ganancias"
+                .collect(Collectors.toCollection(ArrayList::new));
     }
     public static synchronized ArrayList<String> getRanked()
     {
@@ -94,9 +99,6 @@ public class Servidor {
         generador.scheduleAtFixedRate(new GeneraGanador(),0,55, TimeUnit.SECONDS);
 
     }
-
-
-
     public static synchronized int getGanador() {
         return ganador;
     }
@@ -109,5 +111,14 @@ public class Servidor {
         ganador = numero;
         colorGanador = color;
     }
+    public void agregarCliente(String idCliente, Socket socketCliente) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+
+
+
 
 }
