@@ -223,9 +223,9 @@ public class Cliente_GUI {
 
         JLabel labelUsuario = new JLabel("Usuario:");
         JTextField textFieldUsuario = new JTextField();
-        JLabel labelContrasena = new JLabel("Contrase�a:");
+        JLabel labelContrasena = new JLabel("Contraseña:");
         JPasswordField passwordField = new JPasswordField();
-        JButton btnIniciarSesion = new JButton("Iniciar Sesi�n");
+        JButton btnIniciarSesion = new JButton("Iniciar Sesion");
         JButton btnCrearUsuario = new JButton("Crear Usuario");
 
         panelLogin.add(labelUsuario);
@@ -473,7 +473,7 @@ public class Cliente_GUI {
         try {
             int cantidad = Integer.parseInt(textFieldApuesta.getText());
             if (cantidad <= 0 || cantidad > saldo) {
-                JOptionPane.showMessageDialog(frame, "Saldo insuficiente o apuesta inv�lida.");
+                JOptionPane.showMessageDialog(frame, "Saldo insuficiente o apuesta invalida.");
                 return;
             }
 
@@ -495,7 +495,7 @@ public class Cliente_GUI {
             System.out.println(mensajeApuesta);
             apuestas.add(mensajeApuesta);
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(frame, "Introduce un n�mero v�lido en el campo de apuesta.");
+            JOptionPane.showMessageDialog(frame, "Introduce un numero valido en el campo de apuesta.");
         }
     }
 
@@ -544,7 +544,7 @@ public class Cliente_GUI {
             if (leido.startsWith("N")) {
                 String numeroganador = (leido.substring(1));
                 SwingUtilities.invokeLater(() -> {
-                    dialogGanador = mostrarPopup("El n�mero ganador es: " + numeroganador, "N�mero Ganador");
+                    dialogGanador = mostrarPopup("El numero ganador es: " + numeroganador, "Numero Ganador");
                     frame.setEnabled(false);
                 });
 
@@ -692,13 +692,13 @@ public class Cliente_GUI {
 
 
     private static JTable mostrarLeaderboard(String leido) {
-        // Extraer datos del leaderboard
+
         String leaderboardData = leido.substring(leido.indexOf(",") + 1); // Parte despu�s de "G5000,"
         String[] usuarios = leaderboardData.split(","); // Dividir por usuarios
 
-        // Crear una lista para la tabla
+
         java.util.List<String[]> leaderboardList = new ArrayList<>();
-        int rank = 1; // Inicia el ranking
+        int rank = 1;
         for (String usuario : usuarios) {
             String[] parts = usuario.trim().split(" ");
             if (parts.length == 2) {
@@ -707,54 +707,50 @@ public class Cliente_GUI {
             }
         }
 
-        // Crear las columnas de la tabla
+
         String[] columnNames = {"Orden", "Usuario", "Ganancias ($)"};
-        // Datos de la tabla
+
         String[][] data = leaderboardList.toArray(new String[0][]);
 
-        // Crear la tabla
+
         JTable table = new JTable(data, columnNames) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Hacer las celdas no editables
+                return false;
             }
         };
 
-        table.setFont(new Font("Arial", Font.PLAIN, 14)); // Fuente
+        table.setFont(new Font("Arial", Font.PLAIN, 14));
         table.setRowHeight(30); // Altura de fila
         table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
         table.getTableHeader().setBackground(Color.DARK_GRAY);
         table.getTableHeader().setForeground(Color.WHITE);
 
-        // Centrar contenido y aplicar colores por posici�n
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                // Aplicar color de fondo seg�n la posici�n
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) { // No sobrescribir la selecci�n
+                if (!isSelected) {
                     if (row == 0) c.setBackground(new Color(255, 215, 0)); // Oro
                     else if (row == 1) c.setBackground(new Color(192, 192, 192)); // Plata
                     else if (row == 2) c.setBackground(new Color(184, 115, 51)); // Bronce
-                    else c.setBackground(Color.WHITE); // Resto
+                    else c.setBackground(Color.WHITE);
                 }
-                setHorizontalAlignment(SwingConstants.CENTER); // Centrar texto
+                setHorizontalAlignment(SwingConstants.CENTER);
                 return c;
             }
         };
 
-        // Asignar renderizador a todas las columnas
         for (int column = 0; column < table.getColumnCount(); column++) {
             table.getColumnModel().getColumn(column).setCellRenderer(centerRenderer);
         }
 
-        // Ajustar el ancho de las columnas autom�ticamente
         for (int column = 0; column < table.getColumnCount(); column++) {
             table.getColumnModel().getColumn(column).setPreferredWidth(0);
         }
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // Ajuste autom�tico
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        return table; // Return the JTable directly
+        return table;
     }
 
 
