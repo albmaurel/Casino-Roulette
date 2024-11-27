@@ -1,4 +1,3 @@
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -6,9 +5,9 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class GestionarLogin implements Runnable{
+public class GestionarServidor implements Runnable{
     private Socket socket;
-    public GestionarLogin(Socket socket)
+    public GestionarServidor(Socket socket)
     {
         this.socket=socket;
     }
@@ -98,9 +97,11 @@ public class GestionarLogin implements Runnable{
                         int puerto=ServidorPrincipal.getPuerto();
                         ServidorRuleta nueva= new ServidorRuleta(opcion,puerto);
                         ServidorPrincipal.putRuletas(opcion, nueva);
+                        elegida=true;
+                        Thread ruletaThread = new Thread(ServidorPrincipal.getRuletas().get(opcion));
+                        ruletaThread.start();  // Aquí es donde se ejecuta el método run() en un hilo nuevo
                         writer.write("O"+puerto+"\n");
                         writer.flush();
-                        elegida=true;
                     }
                     else
                     {

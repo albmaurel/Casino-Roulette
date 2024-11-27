@@ -1,11 +1,8 @@
-
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Set;
 
-public class GestionarApuesta implements Runnable{
+public class GestionarRuleta implements Runnable{
     private Socket s;
     private boolean logged=false;
     private boolean seguir=true;
@@ -13,7 +10,7 @@ public class GestionarApuesta implements Runnable{
     ArrayList<String> apuestas=null;
     private boolean primera=false;
     private String usr;
-    public GestionarApuesta(Socket socket){s=socket;ganancias=0;}
+    public GestionarRuleta(Socket socket){s=socket;ganancias=0;}
     @Override
     public void run()
     {

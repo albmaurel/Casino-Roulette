@@ -1,7 +1,5 @@
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,9 +32,9 @@ public class Cliente_GUI {
     private JTextArea textAreaApuestas;
 
     //PARTE FUNCIONAMIENTO INTERNO INICIAL
-    private Socket juegoSocket;
-    private ObjectOutputStream juegoOut;
-    private BufferedReader juegoIn;
+    private Socket juegoSocket=null;
+    private ObjectOutputStream juegoOut=null;
+    private BufferedReader juegoIn=null;
     private String usuario;
     private boolean finalizadologin = false;
     private static String[] ruletasDisponibles;
@@ -51,9 +49,9 @@ public class Cliente_GUI {
     private ArrayList<String> apuestas = new ArrayList<>();
     private static int saldo=0;
     private static int PUERTO;
-    private Socket ruletaSocket;
-    private ObjectOutputStream ruletaOut;
-    private BufferedReader ruletaIn;
+    private Socket ruletaSocket=null;
+    private ObjectOutputStream ruletaOut=null;
+    private BufferedReader ruletaIn=null;
 
     //PARTE DEL GESTOR DE RULETAS
     private DefaultComboBoxModel<String> comboBoxModel;
@@ -185,6 +183,21 @@ public class Cliente_GUI {
             e.printStackTrace();
             return false;
         }
+        finally {
+            try {
+                if (juegoOut != null) {
+                    juegoOut.close();
+                }
+                if (juegoIn != null) {
+                    juegoIn.close();
+                }
+                if (juegoSocket != null && !juegoSocket.isClosed()) {
+                    juegoSocket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private boolean unirseSala(String nombreSala) {
@@ -204,6 +217,21 @@ public class Cliente_GUI {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
+        }
+        finally {
+            try {
+                if (juegoOut != null) {
+                    juegoOut.close();
+                }
+                if (juegoIn != null) {
+                    juegoIn.close();
+                }
+                if (juegoSocket != null && !juegoSocket.isClosed()) {
+                    juegoSocket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -251,7 +279,7 @@ public class Cliente_GUI {
                 loginFrame.dispose();
                 mostrarRuletas();
 //                if(finalizadologin) {
-//                	
+//
 //                }
             } else {
                 JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas o Usuario conectado, intente nuevamente.");
@@ -268,7 +296,7 @@ public class Cliente_GUI {
                     loginFrame.dispose();
                     mostrarRuletas();
 //                    if(finalizadologin) {
-//                    	
+//
 //                    }
                 } else {
                     JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
@@ -515,8 +543,8 @@ public class Cliente_GUI {
             try {
                 System.out.println(PUERTO);
                 ruletaSocket = new Socket("localhost", PUERTO);
-                ruletaOut = new ObjectOutputStream(juegoSocket.getOutputStream());
-                ruletaIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
+                ruletaOut = new ObjectOutputStream(ruletaSocket.getOutputStream());
+                ruletaIn = new BufferedReader(new InputStreamReader(ruletaSocket.getInputStream()));
                 while (true) {
                     String leido = ruletaIn.readLine();
                     if (leido != null) {
@@ -525,6 +553,21 @@ public class Cliente_GUI {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            finally {
+                try {
+                    if (ruletaOut != null) {
+                        ruletaOut.close();
+                    }
+                    if (ruletaIn != null) {
+                        ruletaIn.close();
+                    }
+                    if (ruletaSocket != null && !ruletaSocket.isClosed()) {
+                        ruletaSocket.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
         serverListenerThread.start();

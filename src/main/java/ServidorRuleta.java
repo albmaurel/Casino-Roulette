@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -19,7 +18,7 @@ public class ServidorRuleta implements Runnable{
     private static final ScheduledExecutorService temporizador = Executors.newScheduledThreadPool(1);
     private static final ScheduledExecutorService generador = Executors.newScheduledThreadPool(1);
     private static final ExecutorService poolClientes = Executors.newCachedThreadPool();
-    private static final ArrayList<GestionarApuesta> clientes = new ArrayList<>();
+    private static final ArrayList<GestionarRuleta> clientes = new ArrayList<>();
     private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();
     private static ConcurrentHashMap<String, Integer> rank= new ConcurrentHashMap<>();
     private static ArrayList<String> ranked= new ArrayList<>();
@@ -36,7 +35,7 @@ public class ServidorRuleta implements Runnable{
 
             while (true) {
                 Socket clienteSocket = ss.accept();
-                GestionarApuesta cliente = new GestionarApuesta(clienteSocket);
+                GestionarRuleta cliente = new GestionarRuleta(clienteSocket);
                 clientes.add(cliente);
                 poolClientes.execute(cliente);
             }
