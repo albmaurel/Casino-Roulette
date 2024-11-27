@@ -44,8 +44,9 @@ public class GestionarRuleta implements Runnable{
                     aux=ServidorRuleta.getFin();
                     writer.write("T"+(ServidorRuleta.getFin())+"\n");
                     writer.flush();
-                    usr=(String)ois.readObject();
-                    usr=usr.substring(1);
+                    //usr=(String)ois.readObject();
+                    //usr=usr.substring(1);
+                    usr="a";
                     System.out.println("U: "+usr);
                     primera=true;
                 }

@@ -115,12 +115,13 @@ public class GestionarServidor implements Runnable{
                 {
                     if(ServidorPrincipal.getRuletas().keySet().contains(opcion))
                     {
-                        writer.write("O\n");
-                        writer.flush();
+
                         ArrayList<String> aux=ServidorPrincipal.getRegistrados().get(usr);
                         ServidorPrincipal.getRuletas().get(opcion).actualizarUsuarios(usr,aux);
                         elegida=true;
-                        new Thread(ServidorPrincipal.getRuletas().get(opcion)).start();		            	}
+                        new Thread(ServidorPrincipal.getRuletas().get(opcion)).start();
+                        writer.write("O"+ServidorPrincipal.getRuletas().get(opcion)+"\n");
+                        writer.flush();}
                     else
                     {
                         writer.write("I\n");
