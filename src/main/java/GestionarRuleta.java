@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 
 public class GestionarRuleta implements Runnable{
@@ -9,7 +10,7 @@ public class GestionarRuleta implements Runnable{
     private int ganancias;
     ArrayList<String> apuestas=null;
     private boolean primera=false;
-    private String usr;
+    private static String usr;
     public GestionarRuleta(Socket socket){s=socket;ganancias=0;}
     @Override
     public void run()
@@ -20,59 +21,7 @@ public class GestionarRuleta implements Runnable{
             BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(s.getOutputStream(),"UTF-8"));
             ObjectInputStream ois=new ObjectInputStream(s.getInputStream());
 
-            while(!logged) {
 
-                String leido = (String) ois.readObject();
-                String aux=leido.split(" ")[0];
-                String usuario=leido.split(" ")[1];
-                String contrasena=leido.split(" ")[2];
-                if(aux.equals("C")) {
-
-                    if (!ServidorRuleta.getMap().keySet().contains(usuario)) {
-                        usr=usuario;
-                        ArrayList<String> e = new ArrayList<>();
-                        e.add(contrasena);
-                        e.add("10000");
-                        e.add("T");
-                        ServidorRuleta.actualizarUsuarios(usuario,e);
-                        logged = true;
-                        writer.write("S10000\n");
-                        writer.flush();
-                    }
-                    else
-                    {
-
-                        writer.write("I\n");
-                        writer.flush();
-                    }
-                }else {
-                    if (ServidorRuleta.getMap().keySet().contains(usuario)) {
-                        ArrayList<String> datos = ServidorRuleta.getMap().get(usuario);
-                        if(datos.size()==3 && datos.get(2).equals("T"))
-                        {
-                            writer.write("I\n");
-                            writer.flush();
-                        }
-                        else if (contrasena.equals(datos.get(0))) {
-                            usr=usuario;
-                            writer.write("S" + datos.get(1) + "\n");
-                            writer.flush();
-                            datos.add("T");
-                            ServidorRuleta.actualizarUsuarios(usuario,datos);
-                            logged = true;
-                        }
-                        else
-                        {
-                            writer.write("I\n");
-                            writer.flush();
-                        }
-                    }
-                    else {
-                        writer.write("I\n");
-                        writer.flush();
-                    }
-                }
-            }
             if(ServidorRuleta.getMap().size()==1)
             {
                 ServidorRuleta.iniciarTemporizador();
@@ -95,6 +44,9 @@ public class GestionarRuleta implements Runnable{
                     aux=ServidorRuleta.getFin();
                     writer.write("T"+(ServidorRuleta.getFin())+"\n");
                     writer.flush();
+                    usr=(String)ois.readObject();
+                    usr=usr.substring(1);
+                    System.out.println("U: "+usr);
                     primera=true;
                 }
                 apuestas = (ArrayList<String>) ois.readObject();

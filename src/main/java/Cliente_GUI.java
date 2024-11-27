@@ -35,7 +35,7 @@ public class Cliente_GUI {
     private Socket juegoSocket=null;
     private ObjectOutputStream juegoOut=null;
     private BufferedReader juegoIn=null;
-    private String usuario;
+    private static String usuario;
     private boolean finalizadologin = false;
     private static String[] ruletasDisponibles;
 
@@ -574,7 +574,7 @@ public class Cliente_GUI {
         serverListenerThread.start();
     }
 
-    private void processServerMessage(String leido) {
+    private void processServerMessage(String leido)  {
         if (leido != null) {
             long tiempoServidor = 0;
             if (leido.startsWith("T")) {
@@ -583,6 +583,7 @@ public class Cliente_GUI {
                 tiempoServidor = Long.parseLong(leido.substring(1));
                 tiempoFinal = tiempoServidor;
                 System.out.println(tiempoFinal);
+                //ruletaOut.writeObject(usuario);
                 funcionaContador(ruletaOut, ruletaIn);
             }
             if (leido.startsWith("N")) {
