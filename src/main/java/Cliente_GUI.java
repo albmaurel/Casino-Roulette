@@ -24,9 +24,9 @@ public class Cliente_GUI {
     );
 
     //PARTE DE INTERFAZ GRAFICA DE LA RULETA
-    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    int screenWidth = screenSize.width;
-    int screenHeight = screenSize.height;
+    private static Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    private static int screenWidth = screenSize.width;
+    private static int screenHeight = screenSize.height;
     private JFrame frame;
     private JTextField textFieldSaldo, textFieldApuesta, textFieldNumeroGanador;
     private JTextArea textAreaApuestas;
@@ -43,6 +43,7 @@ public class Cliente_GUI {
     private boolean finalizado = false;
     private JLabel labelTemporizador;
     private JDialog dialogGanador;
+    private JDialog dialogEspera;
     private static JDialog leaderboard;
     private Timer contadorTimer;
     private long tiempoFinal;
@@ -590,6 +591,7 @@ public class Cliente_GUI {
                     dialogGanador = mostrarPopup("El numero ganador es: " + numeroganador, "Numero Ganador");
                     frame.setEnabled(false);
                 });
+                SwingUtilities.invokeLater(() -> {dialogEspera = mostrarPopup_v2("No está permitido apostar en 15 segundos","Información importante");});
 
             } //G5000,usuario ganancias,usuario ganancias.
             if (leido.startsWith("G")) {
@@ -645,6 +647,10 @@ public class Cliente_GUI {
                         leaderboard.dispose();
                         leaderboard = null;
                     }
+                    if (dialogEspera != null && dialogEspera.isShowing()) {
+                        dialogEspera.dispose();
+                        dialogEspera = null;
+                    }
 
                     vaciarPanelApuestas();
                     vaciarApuestas();
@@ -694,8 +700,28 @@ public class Cliente_GUI {
         });
         int popupWidth = dialog.getWidth();
         int popupHeight = dialog.getHeight();
-        int popupX = (screenWidth / 2) - popupWidth - 10;
-        int popupY = (screenHeight / 2) - (popupHeight / 2);
+        int popupX = 10;  // Colocado cerca del borde izquierdo
+        int popupY = (screenHeight - popupHeight) - 10;  // Colocado cerca de la parte inferior
+        dialog.setLocation(popupX, popupY);
+        dialog.setVisible(true);
+
+        return dialog;
+    }
+
+    private JDialog mostrarPopup_v2(String mensaje, String titulo) {
+        JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
+        JDialog dialog = optionPane.createDialog(titulo);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.setModal(false);
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+            }
+        });
+        int popupWidth = dialog.getWidth();
+        int popupHeight = dialog.getHeight();
+        int popupX = (screenWidth - popupWidth) - 10;  // Colocado cerca del borde derecho
+        int popupY = (screenHeight - popupHeight) - 10;  // Colocado cerca de la parte inferior
         dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
 
@@ -723,6 +749,11 @@ public class Cliente_GUI {
             leaderboard.setLocationRelativeTo(null); // Centrar en la pantalla
 
             // Hacer visible el dialogo
+            int popupWidth = leaderboard.getWidth();
+            int popupHeight = leaderboard.getHeight();
+            int popupX = (screenWidth / 2) - (popupWidth / 2);
+            int popupY = 10;  // Colocado cerca de la parte superior
+            leaderboard.setLocation(popupX, popupY);
             leaderboard.setModal(false); // No modal, no bloquea otras interacciones
             leaderboard.setVisible(true);
 
@@ -745,7 +776,7 @@ public class Cliente_GUI {
         for (String usuario : usuarios) {
             String[] parts = usuario.trim().split(" ");
             if (parts.length == 2) {
-                leaderboardList.add(new String[]{rank + "�", parts[0], parts[1]});
+                leaderboardList.add(new String[]{rank + "º", parts[0], parts[1]});
                 rank++;
             }
         }
