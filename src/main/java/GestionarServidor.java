@@ -13,7 +13,7 @@ public class GestionarServidor implements Runnable{
     }
     @Override
     public void run() {
-        String usr;
+        String usr="";
         boolean logged=false;
         try
         {
@@ -98,8 +98,10 @@ public class GestionarServidor implements Runnable{
                         ServidorRuleta nueva= new ServidorRuleta(opcion,puerto);
                         ServidorPrincipal.putRuletas(opcion, nueva);
                         elegida=true;
+                        ArrayList<String> aux=ServidorPrincipal.getRegistrados().get(usr);
+                        nueva.actualizarUsuarios(usr,aux);
                         Thread ruletaThread = new Thread(ServidorPrincipal.getRuletas().get(opcion));
-                        ruletaThread.start();  // Aquí es donde se ejecuta el método run() en un hilo nuevo
+                        ruletaThread.start();
                         writer.write("O"+puerto+"\n");
                         writer.flush();
                     }
@@ -113,10 +115,14 @@ public class GestionarServidor implements Runnable{
                 {
                     if(ServidorPrincipal.getRuletas().keySet().contains(opcion))
                     {
-                        writer.write("O\n");
-                        writer.flush();
+
+                        ArrayList<String> aux=ServidorPrincipal.getRegistrados().get(usr);
+                        ServidorPrincipal.getRuletas().get(opcion).actualizarUsuarios(usr,aux);
                         elegida=true;
-                        new Thread(ServidorPrincipal.getRuletas().get(opcion)).start();		            	}
+
+                        writer.write("O"+ServidorPrincipal.getRuletas().get(opcion).getPuerto()+"\n");
+                        System.out.println(ServidorPrincipal.getRuletas().get(opcion).getPuerto());
+                        writer.flush();}
                     else
                     {
                         writer.write("I\n");

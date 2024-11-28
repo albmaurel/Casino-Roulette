@@ -1,5 +1,7 @@
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,16 +37,17 @@ public class Cliente_GUI {
     private Socket juegoSocket=null;
     private ObjectOutputStream juegoOut=null;
     private BufferedReader juegoIn=null;
-    private String usuario;
+    private static String usuario;
     private boolean finalizadologin = false;
     private static String[] ruletasDisponibles;
+    private static String nombreSala;
 
     //PARTE FUNCIONAMIENTO INTERNO FINAL
     private boolean finalizado = false;
     private JLabel labelTemporizador;
     private JDialog dialogGanador;
     private JDialog dialogEspera;
-    private static JDialog leaderboard;
+    private static JTable leaderboard;
     private Timer contadorTimer;
     private long tiempoFinal;
     private ArrayList<String> apuestas = new ArrayList<>();
@@ -53,6 +56,7 @@ public class Cliente_GUI {
     private Socket ruletaSocket=null;
     private ObjectOutputStream ruletaOut=null;
     private BufferedReader ruletaIn=null;
+    private static JScrollPane leaderboardScrollPane;
 
     //PARTE DEL GESTOR DE RULETAS
     private DefaultComboBoxModel<String> comboBoxModel;
@@ -70,174 +74,7 @@ public class Cliente_GUI {
 
     }
 
-
-    private void mostrarRuletas() {
-        JFrame GestorRuletasFrame = new JFrame("Gestor Ruletas - "+usuario);
-        GestorRuletasFrame.setSize(450, 200);
-        GestorRuletasFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        GestorRuletasFrame.setLocationRelativeTo(null);
-        GestorRuletasFrame.setLayout(new GridBagLayout());
-
-        comboBoxModel = new DefaultComboBoxModel<>();
-        comboBoxSalas = new JComboBox<>(comboBoxModel);
-
-        botonCrearSala = new JButton("Crear Sala");
-        botonUnirse = new JButton("Unirte");
-        textoNombreSala = new JTextField(15);
-
-        JLabel etiquetaSalas = new JLabel("Salas disponibles:");
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        GestorRuletasFrame.add(new JLabel("Nombre de la sala:"), gbc);
-
-        gbc.gridx = 1;
-        GestorRuletasFrame.add(textoNombreSala, gbc);
-
-        gbc.gridx = 2;
-        GestorRuletasFrame.add(botonCrearSala, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        GestorRuletasFrame.add(etiquetaSalas, gbc);
-
-        gbc.gridx = 1;
-        gbc.gridwidth = 2;
-        GestorRuletasFrame.add(comboBoxSalas, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 3;
-        GestorRuletasFrame.add(botonUnirse, gbc);
-
-        if (ruletasDisponibles != null && ruletasDisponibles.length > 0) {
-
-            for (String ruleta : ruletasDisponibles) {
-                comboBoxModel.addElement(ruleta);
-            }
-        }
-        botonCrearSala.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String nombreSala = textoNombreSala.getText().trim();
-                if(crearSala(nombreSala)) {
-                    GestorRuletasFrame.dispose();
-                    iniciarInterfaz();
-                    if (finalizado) {
-                        startServerListenerThread();
-                    }
-                }
-                else {
-                    JOptionPane.showMessageDialog(null, "No se pudo crear la sala", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
-        botonUnirse.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String nombreSala = (String) comboBoxSalas.getSelectedItem();
-                if(unirseSala(nombreSala)) {
-                    GestorRuletasFrame.dispose();
-                    iniciarInterfaz();
-                    try {
-                        juegoSocket.close();
-                        juegoIn.close();
-                        juegoOut.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    if (finalizado) {
-                        startServerListenerThread();                 }
-                }
-                else {
-                    JOptionPane.showMessageDialog(GestorRuletasFrame, "No ha sido posible unirse a la sala, intente nuevamente.");
-                }
-            }
-        });
-
-        GestorRuletasFrame.setVisible(true);
-    }
-
-
-    private boolean crearSala(String nombreSala) {
-        try {
-            juegoOut.writeObject("C " + nombreSala);
-            juegoOut.flush();
-            juegoOut.reset();
-
-            String respuesta = juegoIn.readLine();
-
-            if (respuesta != null && respuesta.startsWith("O")) {
-                PUERTO = Integer.parseInt(respuesta.substring(1).trim());
-                return true;
-            }
-
-            return false;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        finally {
-            try {
-                if (juegoOut != null) {
-                    juegoOut.close();
-                }
-                if (juegoIn != null) {
-                    juegoIn.close();
-                }
-                if (juegoSocket != null && !juegoSocket.isClosed()) {
-                    juegoSocket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private boolean unirseSala(String nombreSala) {
-        try {
-            juegoOut.writeObject("U " + nombreSala);
-            juegoOut.flush();
-            juegoOut.reset();
-
-            String respuesta = juegoIn.readLine();
-
-            if (respuesta != null && respuesta.startsWith("O")) {
-                return true;
-            }
-
-            return false;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        finally {
-            try {
-                if (juegoOut != null) {
-                    juegoOut.close();
-                }
-                if (juegoIn != null) {
-                    juegoIn.close();
-                }
-                if (juegoSocket != null && !juegoSocket.isClosed()) {
-                    juegoSocket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
-
+    //CODIGO DE LA GUI DE LOGIN, Y SUS PROCEDIMIENTOS
     private void mostrarLogin() {
         JFrame loginFrame = new JFrame("Login");
         loginFrame.setSize(300, 200);
@@ -269,19 +106,16 @@ public class Cliente_GUI {
         panelLogin.add(btnCrearUsuario);
 
         loginFrame.add(panelLogin, BorderLayout.CENTER);
-
+        loginFrame.setLocationRelativeTo(null);
         loginFrame.setVisible(true);
 
         btnIniciarSesion.addActionListener(e -> {
-            String usuario = textFieldUsuario.getText();
+            usuario = textFieldUsuario.getText();
             String contrasena = new String(passwordField.getPassword());
 
             if (validarLogin(usuario, contrasena)) {
                 loginFrame.dispose();
                 mostrarRuletas();
-//                if(finalizadologin) {
-//
-//                }
             } else {
                 JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas o Usuario conectado, intente nuevamente.");
             }
@@ -296,9 +130,6 @@ public class Cliente_GUI {
                     System.out.println("Usuario creado exitosamente");
                     loginFrame.dispose();
                     mostrarRuletas();
-//                    if(finalizadologin) {
-//
-//                    }
                 } else {
                     JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -361,10 +192,161 @@ public class Cliente_GUI {
         }
     }
 
+    //CODIGO GUI DE LA SELECCIÓN DE RULETAS Y FUNCIONALIDAD
+
+    private void mostrarRuletas() {
+        JFrame GestorRuletasFrame = new JFrame("Gestor Ruletas - "+usuario);
+        GestorRuletasFrame.setSize(450, 200);
+        GestorRuletasFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        GestorRuletasFrame.setLocationRelativeTo(null);
+        GestorRuletasFrame.setLayout(new GridBagLayout());
+
+        comboBoxModel = new DefaultComboBoxModel<>();
+        comboBoxSalas = new JComboBox<>(comboBoxModel);
+
+        botonCrearSala = new JButton("Crear Sala");
+        botonUnirse = new JButton("Unirte");
+        textoNombreSala = new JTextField(15);
+
+        JLabel etiquetaSalas = new JLabel("Salas disponibles:");
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        GestorRuletasFrame.add(new JLabel("Nombre de la sala:"), gbc);
+
+        gbc.gridx = 1;
+        GestorRuletasFrame.add(textoNombreSala, gbc);
+
+        gbc.gridx = 2;
+        GestorRuletasFrame.add(botonCrearSala, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        GestorRuletasFrame.add(etiquetaSalas, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        GestorRuletasFrame.add(comboBoxSalas, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 3;
+        GestorRuletasFrame.add(botonUnirse, gbc);
+
+        if (ruletasDisponibles != null && ruletasDisponibles.length > 0) {
+
+            for (String ruleta : ruletasDisponibles) {
+                comboBoxModel.addElement(ruleta);
+            }
+        }
+        botonCrearSala.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                 nombreSala = textoNombreSala.getText().trim();
+                if(crearSala(nombreSala)) {
+                    GestorRuletasFrame.dispose();
+                    iniciarInterfaz();
+                    if (finalizado) {
+                        startServerListenerThread();
+                    }
+                }
+                else {
+                    JOptionPane.showMessageDialog(null, "No se pudo crear la sala", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        botonUnirse.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                 nombreSala = (String) comboBoxSalas.getSelectedItem();
+                if(unirseSala(nombreSala)) {
+                    GestorRuletasFrame.dispose();
+                    iniciarInterfaz();
+                    if (finalizado) {
+                        startServerListenerThread();                 }
+                }
+                else {
+                    JOptionPane.showMessageDialog(GestorRuletasFrame, "No ha sido posible unirse a la sala, intente nuevamente.");
+                }
+            }
+        });
+
+        GestorRuletasFrame.setVisible(true);
+    }
+
+
+    private boolean crearSala(String nombreSala) {
+        try {
+            juegoOut.writeObject("C " + nombreSala);
+            juegoOut.flush();
+            juegoOut.reset();
+
+            String respuesta = juegoIn.readLine();
+
+            if (respuesta != null && respuesta.startsWith("O")) {
+                PUERTO = Integer.parseInt(respuesta.substring(1).trim());
+                return true;
+            }
+
+            return false;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        finally {
+            try {
+                if (juegoSocket != null && !juegoSocket.isClosed()) {
+                    juegoSocket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean unirseSala(String nombreSala) {
+        try {
+            juegoOut.writeObject("U " + nombreSala);
+            juegoOut.flush();
+            juegoOut.reset();
+
+            String respuesta = juegoIn.readLine();
+
+            if (respuesta != null && respuesta.startsWith("O")) {
+                PUERTO = Integer.parseInt(respuesta.substring(1).trim());
+                return true;
+            }
+
+            return false;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        finally {
+            try {
+                if (juegoSocket != null && !juegoSocket.isClosed()) {
+                    juegoSocket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //CODIGO INTERFAZ PRINCIPAL Y SU FUNCIONAMIENTO
+
     private void iniciarInterfaz() {
-        frame = new JFrame("Ruleta - " + usuario);
+        frame = new JFrame("Ruleta: "+ nombreSala+" ---"+" Usuario: " +usuario);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 600);  // Ajuste del tama�o de la ventana
+        frame.setSize(1300, 600);  // Ajuste del tama�o de la ventana
         frame.setLayout(new BorderLayout());
 
         // Panel principal de la ruleta en disposici�n horizontal
@@ -460,6 +442,48 @@ public class Cliente_GUI {
         scrollPane.setPreferredSize(new Dimension(150, 300));
         panelResultados.add(scrollPane, BorderLayout.CENTER);
 
+        String[] columnNames = {"Orden", "Usuario", "Ganancias "};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+        leaderboard = new JTable(model) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        leaderboard.setFont(new Font("Arial", Font.PLAIN, 11));
+        leaderboard.setRowHeight(30);
+        leaderboard.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
+        leaderboard.getTableHeader().setBackground(Color.DARK_GRAY);
+        leaderboard.getTableHeader().setForeground(Color.WHITE);
+
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    if (row == 0) c.setBackground(new Color(255, 215, 0)); // Oro
+                    else if (row == 1) c.setBackground(new Color(192, 192, 192)); // Plata
+                    else if (row == 2) c.setBackground(new Color(184, 115, 51)); // Bronce
+                    else c.setBackground(Color.WHITE);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int column = 0; column < leaderboard.getColumnCount(); column++) {
+            leaderboard.getColumnModel().getColumn(column).setCellRenderer(centerRenderer);
+        }
+
+        leaderboardScrollPane = new JScrollPane(leaderboard);
+        leaderboardScrollPane.setPreferredSize(new Dimension(225, 300));
+
+        // Agrega el JScrollPane a tu panel principal
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(leaderboardScrollPane, BorderLayout.CENTER);
+        panelResultados.add(leaderboardScrollPane, BorderLayout.EAST);
+
         // Temporizador
         labelTemporizador = new JLabel(" ");
         labelTemporizador.setPreferredSize(new Dimension(200, 40));
@@ -476,6 +500,8 @@ public class Cliente_GUI {
         // Aumentar el tama�o de los cuadros de texto
         textFieldSaldo.setPreferredSize(new Dimension(100, 150));  // Ajuste del tama�o
         textFieldApuesta.setPreferredSize(new Dimension(100, 150)); // Ajuste del tama�o
+
+        frame.setLocationRelativeTo(null);
 
         frame.setVisible(true);
         finalizado = true;
@@ -557,12 +583,6 @@ public class Cliente_GUI {
             }
             finally {
                 try {
-                    if (ruletaOut != null) {
-                        ruletaOut.close();
-                    }
-                    if (ruletaIn != null) {
-                        ruletaIn.close();
-                    }
                     if (ruletaSocket != null && !ruletaSocket.isClosed()) {
                         ruletaSocket.close();
                     }
@@ -574,7 +594,7 @@ public class Cliente_GUI {
         serverListenerThread.start();
     }
 
-    private void processServerMessage(String leido) {
+    private void processServerMessage(String leido)  {
         if (leido != null) {
             long tiempoServidor = 0;
             if (leido.startsWith("T")) {
@@ -583,6 +603,7 @@ public class Cliente_GUI {
                 tiempoServidor = Long.parseLong(leido.substring(1));
                 tiempoFinal = tiempoServidor;
                 System.out.println(tiempoFinal);
+                enviousr(usuario);
                 funcionaContador(ruletaOut, ruletaIn);
             }
             if (leido.startsWith("N")) {
@@ -591,7 +612,7 @@ public class Cliente_GUI {
                     dialogGanador = mostrarPopup("El numero ganador es: " + numeroganador, "Numero Ganador");
                     frame.setEnabled(false);
                 });
-                SwingUtilities.invokeLater(() -> {dialogEspera = mostrarPopup_v2("No está permitido apostar en 15 segundos","Información importante");});
+                SwingUtilities.invokeLater(() -> {dialogEspera = mostrarPopup_v2("No está permitido apostar en 15 segundos...","Información importante");});
 
             } //G5000,usuario ganancias,usuario ganancias.
             if (leido.startsWith("G")) {
@@ -601,9 +622,16 @@ public class Cliente_GUI {
                 System.out.println("Saldo actualizado: " + saldo);
 
                 SwingUtilities.invokeLater(() -> textFieldSaldo.setText(String.valueOf(saldo) + " $"));
-                SwingUtilities.invokeLater(() -> leaderboard= mostrarLeaderboardEnJOptionPane(leido));
+                SwingUtilities.invokeLater(() ->  mostrarLeaderboard(leido,leaderboard));
+                leaderboardScrollPane.revalidate();
+                leaderboardScrollPane.repaint();
             }
         }
+    }
+
+    private void vaciarTabla(JTable table) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0); // Elimina todas las filas del modelo
     }
 
     private void funcionaContador(ObjectOutputStream out, BufferedReader reader) {
@@ -643,15 +671,11 @@ public class Cliente_GUI {
                         dialogGanador.dispose();
                         dialogGanador = null;
                     }
-                    if (leaderboard != null && leaderboard.isShowing()) {
-                        leaderboard.dispose();
-                        leaderboard = null;
-                    }
-                    if (dialogEspera != null && dialogEspera.isShowing()) {
-                        dialogEspera.dispose();
+                   if (dialogEspera != null && dialogEspera.isShowing()) {
+                       dialogEspera.dispose();
                         dialogEspera = null;
                     }
-
+                    vaciarTabla(leaderboard);
                     vaciarPanelApuestas();
                     vaciarApuestas();
                     frame.setEnabled(true);
@@ -675,7 +699,7 @@ public class Cliente_GUI {
 
 
     private void envioapuestas(ArrayList<String> apuestas) {
-        Thread serverListenerThread = new Thread(() -> {
+        Thread serverWriterThread = new Thread(() -> {
             try {
                 ruletaOut.writeObject(apuestas);
                 ruletaOut.flush();
@@ -685,7 +709,20 @@ public class Cliente_GUI {
                 ex.printStackTrace();
             }
         });
-        serverListenerThread.start();
+        serverWriterThread.start();
+    }
+    private void enviousr(String usr) {
+        Thread serverWriterThread = new Thread(() -> {
+            try {
+                ruletaOut.writeObject("U"+usr);
+                ruletaOut.flush();
+                ruletaOut.reset();
+                vaciarApuestas();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        serverWriterThread.start();
     }
 
     private JDialog mostrarPopup(String mensaje, String titulo) {
@@ -700,8 +737,8 @@ public class Cliente_GUI {
         });
         int popupWidth = dialog.getWidth();
         int popupHeight = dialog.getHeight();
-        int popupX = 10;  // Colocado cerca del borde izquierdo
-        int popupY = (screenHeight - popupHeight) - 10;  // Colocado cerca de la parte inferior
+        int popupX = (screenWidth - 400) / 2; // Centrado para el primer popup
+        int popupY = (screenHeight - popupHeight) / 2;
         dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
 
@@ -720,56 +757,19 @@ public class Cliente_GUI {
         });
         int popupWidth = dialog.getWidth();
         int popupHeight = dialog.getHeight();
-        int popupX = (screenWidth - popupWidth) - 10;  // Colocado cerca del borde derecho
-        int popupY = (screenHeight - popupHeight) - 10;  // Colocado cerca de la parte inferior
+        int popupX = (screenWidth - 400) / 2 + popupWidth; // Centrado y ajustado para el segundo popup
+        int popupY = (screenHeight - popupHeight) / 2;
         dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
 
         return dialog;
     }
 
-    private static JDialog mostrarLeaderboardEnJOptionPane(String leido) {
-        try {
-            // Obtener el JTable del leaderboard
-            JTable leaderboardTable = mostrarLeaderboard(leido);
 
-            // Crear un JDialog para mostrar el JTable sin el bot�n "OK"
-            leaderboard = new JDialog();
-            leaderboard.setTitle("Leaderboard");
-
-            // Usar un JScrollPane para hacer scrollable el JTable
-            JScrollPane scrollPane = new JScrollPane(leaderboardTable);
-
-            // Configurar el layout para mostrar el JScrollPane con el JTable
-            leaderboard.setLayout(new BorderLayout());
-            leaderboard.add(scrollPane, BorderLayout.CENTER);
-
-            // Ajustar tama�o del dialogo seg�n el contenido
-            leaderboard.setSize(400, 300); // Tama�o personalizado
-            leaderboard.setLocationRelativeTo(null); // Centrar en la pantalla
-
-            // Hacer visible el dialogo
-            int popupWidth = leaderboard.getWidth();
-            int popupHeight = leaderboard.getHeight();
-            int popupX = (screenWidth / 2) - (popupWidth / 2);
-            int popupY = 10;  // Colocado cerca de la parte superior
-            leaderboard.setLocation(popupX, popupY);
-            leaderboard.setModal(false); // No modal, no bloquea otras interacciones
-            leaderboard.setVisible(true);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return leaderboard;
-    }
-
-
-
-    private static JTable mostrarLeaderboard(String leido) {
-
-        String leaderboardData = leido.substring(leido.indexOf(",") + 1); // Parte despu�s de "G5000,"
-        String[] usuarios = leaderboardData.split(","); // Dividir por usuarios
-
+    private void mostrarLeaderboard(String leido, JTable leaderboard) {
+        // Extrae los datos del string
+        String leaderboardData = leido.substring(leido.indexOf(",") + 1);
+        String[] usuarios = leaderboardData.split(",");
 
         java.util.List<String[]> leaderboardList = new ArrayList<>();
         int rank = 1;
@@ -781,51 +781,14 @@ public class Cliente_GUI {
             }
         }
 
-
-        String[] columnNames = {"Orden", "Usuario", "Ganancias ($)"};
-
-        String[][] data = leaderboardList.toArray(new String[0][]);
-
-
-        JTable table = new JTable(data, columnNames) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        table.setFont(new Font("Arial", Font.PLAIN, 14));
-        table.setRowHeight(30); // Altura de fila
-        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
-        table.getTableHeader().setBackground(Color.DARK_GRAY);
-        table.getTableHeader().setForeground(Color.WHITE);
-
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) {
-                    if (row == 0) c.setBackground(new Color(255, 215, 0)); // Oro
-                    else if (row == 1) c.setBackground(new Color(192, 192, 192)); // Plata
-                    else if (row == 2) c.setBackground(new Color(184, 115, 51)); // Bronce
-                    else c.setBackground(Color.WHITE);
-                }
-                setHorizontalAlignment(SwingConstants.CENTER);
-                return c;
-            }
-        };
-
-        for (int column = 0; column < table.getColumnCount(); column++) {
-            table.getColumnModel().getColumn(column).setCellRenderer(centerRenderer);
+        // Actualiza el modelo del JTable
+        DefaultTableModel model = (DefaultTableModel) leaderboard.getModel();
+        model.setRowCount(0); // Vacía filas anteriores
+        for (String[] fila : leaderboardList) {
+            model.addRow(fila); // Añade nuevas filas
         }
-
-        for (int column = 0; column < table.getColumnCount(); column++) {
-            table.getColumnModel().getColumn(column).setPreferredWidth(0);
-        }
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-        return table;
     }
+
 
 
 }

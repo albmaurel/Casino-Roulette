@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 
 public class GestionarRuleta implements Runnable{
@@ -7,10 +8,11 @@ public class GestionarRuleta implements Runnable{
     private boolean logged=false;
     private boolean seguir=true;
     private int ganancias;
-    ArrayList<String> apuestas=null;
+    private ArrayList<String> apuestas=null;
     private boolean primera=false;
-    private String usr;
-    public GestionarRuleta(Socket socket){s=socket;ganancias=0;}
+    private  String usr;
+    private ServidorRuleta sr;
+    public GestionarRuleta(Socket socket,ServidorRuleta sr){s=socket;ganancias=0;this.sr=sr;}
     @Override
     public void run()
     {
@@ -20,62 +22,10 @@ public class GestionarRuleta implements Runnable{
             BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(s.getOutputStream(),"UTF-8"));
             ObjectInputStream ois=new ObjectInputStream(s.getInputStream());
 
-            while(!logged) {
 
-                String leido = (String) ois.readObject();
-                String aux=leido.split(" ")[0];
-                String usuario=leido.split(" ")[1];
-                String contrasena=leido.split(" ")[2];
-                if(aux.equals("C")) {
-
-                    if (!ServidorRuleta.getMap().keySet().contains(usuario)) {
-                        usr=usuario;
-                        ArrayList<String> e = new ArrayList<>();
-                        e.add(contrasena);
-                        e.add("10000");
-                        e.add("T");
-                        ServidorRuleta.actualizarUsuarios(usuario,e);
-                        logged = true;
-                        writer.write("S10000\n");
-                        writer.flush();
-                    }
-                    else
-                    {
-
-                        writer.write("I\n");
-                        writer.flush();
-                    }
-                }else {
-                    if (ServidorRuleta.getMap().keySet().contains(usuario)) {
-                        ArrayList<String> datos = ServidorRuleta.getMap().get(usuario);
-                        if(datos.size()==3 && datos.get(2).equals("T"))
-                        {
-                            writer.write("I\n");
-                            writer.flush();
-                        }
-                        else if (contrasena.equals(datos.get(0))) {
-                            usr=usuario;
-                            writer.write("S" + datos.get(1) + "\n");
-                            writer.flush();
-                            datos.add("T");
-                            ServidorRuleta.actualizarUsuarios(usuario,datos);
-                            logged = true;
-                        }
-                        else
-                        {
-                            writer.write("I\n");
-                            writer.flush();
-                        }
-                    }
-                    else {
-                        writer.write("I\n");
-                        writer.flush();
-                    }
-                }
-            }
-            if(ServidorRuleta.getMap().size()==1)
+            if(sr.getMap().size()==1)
             {
-                ServidorRuleta.iniciarTemporizador();
+                sr.iniciarTemporizador();
                 long waitTime = aux1 + 100 - System.currentTimeMillis();
                 if (waitTime > 0) {
                     try {
@@ -91,10 +41,13 @@ public class GestionarRuleta implements Runnable{
                 ganancias=0;
                 apuestas=null;
                 if(primera==false) {
-                    System.out.println(usr+": "+ServidorRuleta.getFin());
-                    aux=ServidorRuleta.getFin();
-                    writer.write("T"+(ServidorRuleta.getFin())+"\n");
+                    System.out.println(usr+": "+sr.getFin());
+                    aux=sr.getFin();
+                    writer.write("T"+(sr.getFin())+"\n");
                     writer.flush();
+                    usr=(String)ois.readObject();
+                    usr=usr.substring(1);
+                    System.out.println("U: "+usr);
                     primera=true;
                 }
                 apuestas = (ArrayList<String>) ois.readObject();
@@ -103,15 +56,15 @@ public class GestionarRuleta implements Runnable{
                     ganancias += calcular(apuesta);
                     //System.out.println(ganancias);
                 }
-                ArrayList<String> datos=ServidorRuleta.getMap().get(usr);
+                ArrayList<String> datos=sr.getMap().get(usr);
                 datos.set(1,(ganancias+Integer.parseInt(datos.get(1)))+"");
-                ServidorRuleta.actualizarUsuarios(usr,datos);
-                ServidorRuleta.actualizarRank(usr,ganancias);
+                sr.actualizarUsuarios(usr,datos);
+                sr.actualizarRank(usr,ganancias);
 
 
-                writer.write("N"+ServidorRuleta.getGanador() + "\n");
+                writer.write("N"+sr.getGanador() + "\n");
                 writer.flush();
-                System.out.println(ServidorRuleta.getGanador());
+                //System.out.println(sr.getGanador());
                 String res = "G" + ganancias;
                 try {
                     Thread.sleep(1000);
@@ -119,13 +72,13 @@ public class GestionarRuleta implements Runnable{
                     e.printStackTrace();
                 }
 
-                String leaderboard = ServidorRuleta.generateLeaderboard();
+                String leaderboard = sr.generateLeaderboard();
                 res += "," + leaderboard;
                 res += "\n";
                 writer.write(res);
                 writer.flush();
-                System.out.println(res);
-                System.out.println(ganancias);
+                //System.out.println(res);
+                //System.out.println(ganancias);
                 // Para que te lo mande en el 0
                 long waitTime = aux1 + 100 - System.currentTimeMillis()+1000;
                 if (waitTime > 0) {
@@ -141,10 +94,10 @@ public class GestionarRuleta implements Runnable{
         catch(IOException e)
         {
             try {
-                ArrayList<String> datos1 = ServidorRuleta.getMap().get(usr);
+                ArrayList<String> datos1 = sr.getMap().get(usr);
                 datos1.remove(2);
                 datos1.add("F");
-                ServidorRuleta.actualizarUsuarios(usr,datos1);
+                sr.actualizarUsuarios(usr,datos1);
                 s.close();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -163,13 +116,13 @@ public class GestionarRuleta implements Runnable{
     }
     private int calcular(String apuesta)
     {
-        int ganador=ServidorRuleta.getGanador();
-        String color=ServidorRuleta.getColorGanador();
+        int ganador=sr.getGanador();
+        String color=sr.getColorGanador();
         String s1=apuesta.split(" ")[0];
         int valor=Integer.parseInt(apuesta.split(" ")[1]);
-        ArrayList<String> datos=ServidorRuleta.getMap().get(usr);
+        ArrayList<String> datos=sr.getMap().get(usr);
         datos.set(1,(Integer.parseInt(datos.get(1))-valor)+"");
-        ServidorRuleta.getMap().put(usr,datos);
+        sr.getMap().put(usr,datos);
         if(s1.length()==1)
         {
             if(s1.equals(color))
