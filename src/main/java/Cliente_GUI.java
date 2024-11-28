@@ -57,6 +57,7 @@ public class Cliente_GUI {
     private ObjectOutputStream ruletaOut=null;
     private BufferedReader ruletaIn=null;
     private static JScrollPane leaderboardScrollPane;
+    private static boolean  unavez=false;
 
     //PARTE DEL GESTOR DE RULETAS
     private DefaultComboBoxModel<String> comboBoxModel;
@@ -247,7 +248,7 @@ public class Cliente_GUI {
         botonCrearSala.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                 nombreSala = textoNombreSala.getText().trim();
+                nombreSala = textoNombreSala.getText().trim();
                 if(crearSala(nombreSala)) {
                     GestorRuletasFrame.dispose();
                     iniciarInterfaz();
@@ -264,7 +265,7 @@ public class Cliente_GUI {
         botonUnirse.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                 nombreSala = (String) comboBoxSalas.getSelectedItem();
+                nombreSala = (String) comboBoxSalas.getSelectedItem();
                 if(unirseSala(nombreSala)) {
                     GestorRuletasFrame.dispose();
                     iniciarInterfaz();
@@ -614,7 +615,7 @@ public class Cliente_GUI {
                 });
                 SwingUtilities.invokeLater(() -> {dialogEspera = mostrarPopup_v2("No está permitido apostar en 15 segundos...","Información importante");});
 
-            } //G5000,usuario ganancias,usuario ganancias.
+            }
             if (leido.startsWith("G")) {
                 //String ganancias = leido.substring(1);
                 String ganancias = leido.substring(1, leido.indexOf(","));
@@ -652,6 +653,9 @@ public class Cliente_GUI {
 
                 if (esPrimeraIteracion[0]) {
                     tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
+                    if (tiempoRestante>15){
+                        unavez=true;
+                    }
                 } else {
                     tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
                 }
@@ -663,6 +667,11 @@ public class Cliente_GUI {
                         accion04Ejecutada = true;
                         envioapuestas(apuestas);
                     }
+                    if(unavez==false && tiempoRestante < 15) {
+                        SwingUtilities.invokeLater(() -> {dialogEspera = mostrarPopup_v2("No está permitido apostar en 15 segundos...","Información importante");});
+                        frame.setEnabled(false);
+                        unavez=true;
+                    }
                 } else {
                     labelTemporizador.setText("Tiempo Restante: 0 segundos");
                     contadorTimer.stop();
@@ -671,8 +680,8 @@ public class Cliente_GUI {
                         dialogGanador.dispose();
                         dialogGanador = null;
                     }
-                   if (dialogEspera != null && dialogEspera.isShowing()) {
-                       dialogEspera.dispose();
+                    if (dialogEspera != null && dialogEspera.isShowing()) {
+                        dialogEspera.dispose();
                         dialogEspera = null;
                     }
                     vaciarTabla(leaderboard);
@@ -681,14 +690,11 @@ public class Cliente_GUI {
                     frame.setEnabled(true);
                     frame.requestFocus();
 
-                    // Reiniciar el tiempo
                     tiempoFinal = System.currentTimeMillis() + TIEMPO_FIJO;
                     accion04Ejecutada = false;
 
-                    // Cambiar la bandera despu�s de la primera iteraci�n
                     esPrimeraIteracion[0] = false;
 
-                    // Reiniciar el temporizador
                     contadorTimer.start();
                 }
             }
