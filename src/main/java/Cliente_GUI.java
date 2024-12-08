@@ -1,4 +1,3 @@
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -14,10 +13,10 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Cliente_GUI {
 
-    // Conjuntos de n�meros rojos y negros seg�n la imagen
     private static final Set<Integer> NUMEROS_ROJOS = Set.of(
             1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
     );
@@ -30,7 +29,7 @@ public class Cliente_GUI {
     private static int screenWidth = screenSize.width;
     private static int screenHeight = screenSize.height;
     private JFrame frame;
-    private JTextField textFieldSaldo, textFieldApuesta, textFieldNumeroGanador;
+    private JTextField textFieldSaldo, textFieldApuesta;
     private JTextArea textAreaApuestas;
 
     //PARTE FUNCIONAMIENTO INTERNO INICIAL
@@ -38,7 +37,6 @@ public class Cliente_GUI {
     private ObjectOutputStream juegoOut=null;
     private BufferedReader juegoIn=null;
     private static String usuario;
-    private boolean finalizadologin = false;
     private static String[] ruletasDisponibles;
     private static String nombreSala;
 
@@ -58,6 +56,8 @@ public class Cliente_GUI {
     private BufferedReader ruletaIn=null;
     private static JScrollPane leaderboardScrollPane;
     private static boolean  unavez=false;
+    private AtomicBoolean detenerHiloLectura = new AtomicBoolean(false);
+
 
     //PARTE DEL GESTOR DE RULETAS
     private DefaultComboBoxModel<String> comboBoxModel;
@@ -66,10 +66,13 @@ public class Cliente_GUI {
     private JButton botonUnirse;
     private JTextField textoNombreSala;
 
+
     public Cliente_GUI() {
         mostrarLogin();
     }
-
+    /*SwingUtilities.invokeLater() coloca el código dentro de un Runnable en la cola de eventos de la interfaz gráfica de
+      usuario (GUI) de Swing para que se ejecute en el hilo de eventos. Esto asegura que la actualización de la GUI
+      se haga de manera segura desde el hilo principal, evitando problemas de concurrencia.*/
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Cliente_GUI::new);
 
@@ -77,72 +80,92 @@ public class Cliente_GUI {
 
     //CODIGO DE LA GUI DE LOGIN, Y SUS PROCEDIMIENTOS
     private void mostrarLogin() {
-        JFrame loginFrame = new JFrame("Login");
-        loginFrame.setSize(300, 200);
-        loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        loginFrame.setLayout(new BorderLayout(10, 10));
-
-        JPanel panelLogin = new JPanel();
-        panelLogin.setLayout(new GridLayout(4, 2, 10, 10));
-
-        panelLogin.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-        JLabel labelUsuario = new JLabel("Usuario:");
-        JTextField textFieldUsuario = new JTextField();
-        JLabel labelContrasena = new JLabel("Contraseña:");
-        JPasswordField passwordField = new JPasswordField();
-        JButton btnIniciarSesion = new JButton("Iniciar Sesion");
-        JButton btnCrearUsuario = new JButton("Crear Usuario");
-
-        panelLogin.add(labelUsuario);
-        panelLogin.add(textFieldUsuario);
-        panelLogin.add(labelContrasena);
-        panelLogin.add(passwordField);
-
-        panelLogin.add(new JLabel());
-        panelLogin.add(new JLabel());
-
-        panelLogin.add(btnIniciarSesion);
-        panelLogin.add(btnCrearUsuario);
-
-        loginFrame.add(panelLogin, BorderLayout.CENTER);
-        loginFrame.setLocationRelativeTo(null);
-        loginFrame.setVisible(true);
-
-        btnIniciarSesion.addActionListener(e -> {
-            usuario = textFieldUsuario.getText();
-            String contrasena = new String(passwordField.getPassword());
-
-            if (validarLogin(usuario, contrasena)) {
-                loginFrame.dispose();
-                mostrarRuletas();
-            } else {
-                JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas o Usuario conectado, intente nuevamente.");
-            }
-        });
-        btnCrearUsuario.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                usuario = textFieldUsuario.getText();
-                String contrasena = new String(passwordField.getPassword());
-
-                if (crearUsuario(usuario, contrasena)) {
-                    System.out.println("Usuario creado exitosamente");
-                    loginFrame.dispose();
-                    mostrarRuletas();
-                } else {
-                    JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-    }
-
-    private boolean validarLogin(String usuario, String contrasena) {
         try {
             juegoSocket = new Socket("localhost", 55555);
             juegoOut = new ObjectOutputStream(juegoSocket.getOutputStream());
             juegoIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
+            JFrame loginFrame = new JFrame("Login");
+            loginFrame.setSize(300, 200);
+            loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+            loginFrame.setLayout(new BorderLayout(13, 13));
+
+            JPanel panelLogin = new JPanel();
+            panelLogin.setLayout(new GridLayout(4, 2, 10, 10));
+            loginFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            panelLogin.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+            JLabel labelUsuario = new JLabel("Usuario:");
+            JTextField textFieldUsuario = new JTextField();
+            JLabel labelContrasena = new JLabel("Contraseña:");
+            JPasswordField passwordField = new JPasswordField();
+            JButton btnIniciarSesion = new JButton("Iniciar Sesion");
+            JButton btnCrearUsuario = new JButton("Crear Usuario");
+            JButton btnCerrar = new JButton("Cerrar");
+
+            panelLogin.add(labelUsuario);
+            panelLogin.add(textFieldUsuario);
+            panelLogin.add(labelContrasena);
+            panelLogin.add(passwordField);
+
+            panelLogin.add(btnIniciarSesion);
+            panelLogin.add(btnCrearUsuario);
+            panelLogin.add(btnCerrar);
+
+            loginFrame.add(panelLogin, BorderLayout.CENTER);
+            loginFrame.setLocationRelativeTo(null);
+            loginFrame.setVisible(true);
+
+            btnCerrar.addActionListener(e -> {
+                envioFin(); // Genera un hilo para el envío en caso de cierre
+            });
+
+            btnIniciarSesion.addActionListener(e -> {
+                usuario = textFieldUsuario.getText().trim();
+                String contrasena = new String(passwordField.getPassword()).trim();
+
+                // Validación de campos vacíos
+                if (usuario.isEmpty() || contrasena.isEmpty()) {
+                    JOptionPane.showMessageDialog(loginFrame, "Por favor, complete todos los campos.", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    if (validarLogin(usuario, contrasena)) {
+                        loginFrame.dispose();
+                        mostrarRuletas();
+                    } else {
+                        JOptionPane.showMessageDialog(loginFrame, "Credenciales incorrectas o usuario conectado, intente nuevamente.");
+                    }
+                }
+            });
+
+            btnCrearUsuario.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    usuario = textFieldUsuario.getText().trim();
+                    String contrasena = new String(passwordField.getPassword()).trim();
+
+                    // Validación de campos vacíos
+                    if (usuario.isEmpty() || contrasena.isEmpty()) {
+                        JOptionPane.showMessageDialog(null, "Por favor, complete todos los campos.", "Error", JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        if (crearUsuario(usuario, contrasena)) {
+                            System.out.println("Usuario creado exitosamente");
+                            loginFrame.dispose();
+                            mostrarRuletas();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "No se pudo crear el usuario", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            });
+        } catch (IOException e2) {
+            e2.printStackTrace();
+        }
+    }
+
+
+    //funcion para comunicacion con el servidor y validar el login del cliente
+    private boolean validarLogin(String usuario, String contrasena) {
+        try {
 
             juegoOut.writeObject("L " + usuario + " " + contrasena);
             juegoOut.flush();
@@ -166,11 +189,9 @@ public class Cliente_GUI {
         }
     }
 
+    //funcion para la creacion del usuario mediante la comunicacion con el servidor
     private boolean crearUsuario(String usuario, String contrasena) {
         try {
-            juegoSocket = new Socket("localhost", 55555);
-            juegoOut = new ObjectOutputStream(juegoSocket.getOutputStream());
-            juegoIn = new BufferedReader(new InputStreamReader(juegoSocket.getInputStream()));
 
             juegoOut.writeObject("C " + usuario + " " + contrasena);
             juegoOut.flush();
@@ -196,11 +217,12 @@ public class Cliente_GUI {
     //CODIGO GUI DE LA SELECCIÓN DE RULETAS Y FUNCIONALIDAD
 
     private void mostrarRuletas() {
-        JFrame GestorRuletasFrame = new JFrame("Gestor Ruletas - "+usuario);
+        JFrame GestorRuletasFrame = new JFrame("Gestor Ruletas - " + usuario);
         GestorRuletasFrame.setSize(450, 200);
         GestorRuletasFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         GestorRuletasFrame.setLocationRelativeTo(null);
         GestorRuletasFrame.setLayout(new GridBagLayout());
+        GestorRuletasFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         comboBoxModel = new DefaultComboBoxModel<>();
         comboBoxSalas = new JComboBox<>(comboBoxModel);
@@ -211,9 +233,15 @@ public class Cliente_GUI {
 
         JLabel etiquetaSalas = new JLabel("Salas disponibles:");
 
+        JButton btnCerrar = new JButton("Cerrar");
+        btnCerrar.addActionListener(e -> {
+            envioFin(); //AL IGUAL QUE EN EL ANTERIOR CASO, UTILIZO UN HILO DISTINTO AL DRAWING
+        });
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -236,44 +264,59 @@ public class Cliente_GUI {
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 1;
+        GestorRuletasFrame.add(btnCerrar, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
         GestorRuletasFrame.add(botonUnirse, gbc);
 
+        // Llenar el comboBox con las ruletas disponibles
         if (ruletasDisponibles != null && ruletasDisponibles.length > 0) {
-
             for (String ruleta : ruletasDisponibles) {
                 comboBoxModel.addElement(ruleta);
             }
         }
+
+        // Crear una nueva sala
         botonCrearSala.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 nombreSala = textoNombreSala.getText().trim();
-                if(crearSala(nombreSala)) {
-                    GestorRuletasFrame.dispose();
-                    iniciarInterfaz();
-                    if (finalizado) {
-                        startServerListenerThread();
+                if (nombreSala == null || nombreSala.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(GestorRuletasFrame, "La sala seleccionada está vacía. Selecciona otra sala.", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    if (crearSala(nombreSala)) {
+                        GestorRuletasFrame.dispose();
+                        iniciarInterfaz();
+                        if (finalizado) {
+                            startServerListenerThread();
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "No se pudo crear la sala // CUIDADO SOLO PUEDE HABER 20", "Error", JOptionPane.ERROR_MESSAGE);
                     }
-                }
-                else {
-                    JOptionPane.showMessageDialog(null, "No se pudo crear la sala", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
 
+        // Unirse a una sala
         botonUnirse.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 nombreSala = (String) comboBoxSalas.getSelectedItem();
-                if(unirseSala(nombreSala)) {
-                    GestorRuletasFrame.dispose();
-                    iniciarInterfaz();
-                    if (finalizado) {
-                        startServerListenerThread();                 }
-                }
-                else {
-                    JOptionPane.showMessageDialog(GestorRuletasFrame, "No ha sido posible unirse a la sala, intente nuevamente.");
+                if (nombreSala == null || nombreSala.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(GestorRuletasFrame, "La sala seleccionada está vacía. Selecciona otra sala.", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    if (unirseSala(nombreSala)) {
+                        GestorRuletasFrame.dispose();
+                        iniciarInterfaz();
+                        if (finalizado) {
+                            startServerListenerThread();
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(GestorRuletasFrame, "No ha sido posible unirse a la sala, intente nuevamente.");
+                    }
                 }
             }
         });
@@ -282,6 +325,7 @@ public class Cliente_GUI {
     }
 
 
+    //funcion para la comunicacion con el servidor para la creacion de una sala
     private boolean crearSala(String nombreSala) {
         try {
             juegoOut.writeObject("C " + nombreSala);
@@ -303,8 +347,9 @@ public class Cliente_GUI {
         }
         finally {
             try {
-                if (juegoSocket != null && !juegoSocket.isClosed()) {
-                    juegoSocket.close();
+                if (juegoSocket != null) {
+                    juegoSocket.close(); //AL CREAR LA SALA LA COMUNICACIÓN CON EL SERVIDOR PRINCIPAL FINALIZA, ASI GASTAMOS MENOS RECURSOS
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -312,6 +357,7 @@ public class Cliente_GUI {
         }
     }
 
+    //funcion para la comunicacion con el servidor para que el cliente se una a una sala
     private boolean unirseSala(String nombreSala) {
         try {
             juegoOut.writeObject("U " + nombreSala);
@@ -333,8 +379,9 @@ public class Cliente_GUI {
         }
         finally {
             try {
-                if (juegoSocket != null && !juegoSocket.isClosed()) {
-                    juegoSocket.close();
+                if (juegoSocket != null) {
+                    juegoSocket.close(); //AL UNIRSE LA SALA LA COMUNICACIÓN CON EL SERVIDOR PRINCIPAL FINALIZA, ASI GASTAMOS MENOS RECURSOS
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -345,37 +392,32 @@ public class Cliente_GUI {
     //CODIGO INTERFAZ PRINCIPAL Y SU FUNCIONAMIENTO
 
     private void iniciarInterfaz() {
-        frame = new JFrame("Ruleta: "+ nombreSala+" ---"+" Usuario: " +usuario);
+        frame = new JFrame("Ruleta: " + nombreSala + " ---" + " Usuario: " + usuario);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1300, 600);  // Ajuste del tama�o de la ventana
+        frame.setSize(1300, 600);
         frame.setLayout(new BorderLayout());
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        // Panel principal de la ruleta en disposici�n horizontal
         JPanel panelRuleta = new JPanel(new BorderLayout());
 
-        // Panel para el 0 a la izquierda ocupando la altura de tres filas
         JButton btnCero = new JButton("0");
         btnCero.setBackground(Color.GREEN);
-        btnCero.setPreferredSize(new Dimension(70, 300)); // Tama�o personalizado para destacarlo
+        btnCero.setPreferredSize(new Dimension(70, 300));
         btnCero.addActionListener(e -> manejarApuesta("Numero 0"));
 
-        // Panel para los n�meros restantes, organizado en tres filas y 12 columnas
-        JPanel panelNumeros = new JPanel(new GridLayout(3, 12, 5, 5)); // 3 filas y 12 columnas
+        JPanel panelNumeros = new JPanel(new GridLayout(3, 12, 5, 5));
 
-        // Lista de n�meros organizada en filas horizontales como en una ruleta
         int[][] numerosRuleta = {
                 {3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36},
                 {2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35},
                 {1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34}
         };
 
-        // Crear botones para cada n�mero en el orden deseado
         for (int fila = 0; fila < 3; fila++) {
             for (int col = 0; col < 12; col++) {
                 int numero = numerosRuleta[fila][col];
                 JButton btnNumero = new JButton(String.valueOf(numero));
 
-                // Colores para rojo y negro
                 if (NUMEROS_ROJOS.contains(numero)) {
                     btnNumero.setBackground(Color.RED);
                     btnNumero.setForeground(Color.WHITE);
@@ -390,11 +432,9 @@ public class Cliente_GUI {
             }
         }
 
-        // A�adir el panelCero y panelNumeros al panel principal de la ruleta
         panelRuleta.add(btnCero, BorderLayout.WEST);
         panelRuleta.add(panelNumeros, BorderLayout.CENTER);
 
-        // Panel para apuestas adicionales (color, par/impar)
         JPanel panelApuestas = new JPanel(new GridLayout(2, 2));
         JButton btnRojo = new JButton("Rojo");
         btnRojo.setBackground(Color.RED);
@@ -418,7 +458,6 @@ public class Cliente_GUI {
 
         JPanel panelSaldo = new JPanel(new GridLayout(2, 1));
 
-        // Crear un panel para colocar saldo y apuesta
         JLabel labelSaldo = new JLabel("Saldo");
         labelSaldo.setHorizontalAlignment(SwingConstants.CENTER);
         panelSaldo.add(labelSaldo);
@@ -434,8 +473,6 @@ public class Cliente_GUI {
         textFieldApuesta.setHorizontalAlignment(SwingConstants.CENTER);
         panelSaldo.add(textFieldApuesta);
 
-
-        // Panel para mostrar apuestas y resultados
         JPanel panelResultados = new JPanel(new BorderLayout());
         textAreaApuestas = new JTextArea("Apuestas realizadas:\n");
         textAreaApuestas.setEditable(false);
@@ -480,51 +517,41 @@ public class Cliente_GUI {
         leaderboardScrollPane = new JScrollPane(leaderboard);
         leaderboardScrollPane.setPreferredSize(new Dimension(225, 300));
 
-        // Agrega el JScrollPane a tu panel principal
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(leaderboardScrollPane, BorderLayout.CENTER);
         panelResultados.add(leaderboardScrollPane, BorderLayout.EAST);
 
-        // Temporizador
         labelTemporizador = new JLabel(" ");
         labelTemporizador.setPreferredSize(new Dimension(200, 40));
         labelTemporizador.setHorizontalAlignment(SwingConstants.CENTER);
         labelTemporizador.setVerticalAlignment(SwingConstants.CENTER);
 
-        // A�adir todos los paneles al frame principal
         frame.add(panelRuleta, BorderLayout.CENTER);
         frame.add(panelApuestas, BorderLayout.NORTH);
         frame.add(panelSaldo, BorderLayout.WEST);
         frame.add(panelResultados, BorderLayout.EAST);
-        frame.add(labelTemporizador, BorderLayout.PAGE_END);
 
-        // Aumentar el tama�o de los cuadros de texto
-        textFieldSaldo.setPreferredSize(new Dimension(100, 150));  // Ajuste del tama�o
-        textFieldApuesta.setPreferredSize(new Dimension(100, 150)); // Ajuste del tama�o
+
+        JPanel panelCerrar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton btnCerrar = new JButton("Cerrar");
+        btnCerrar.addActionListener(e -> {
+            envioFin2(); //AL IGUAL QUE ANTES, UTILIZAMOS ESTE METODO PARA EL TRATAMIENTO DESDE OTRO HILO DISTINTO DEL DRAWING
+        });
+        panelCerrar.add(btnCerrar);
+        frame.add(panelCerrar, BorderLayout.PAGE_END);JPanel panelInferior = new JPanel(new BorderLayout());
+        panelInferior.add(labelTemporizador, BorderLayout.CENTER);
+        panelInferior.add(panelCerrar, BorderLayout.WEST);
+        frame.add(panelInferior, BorderLayout.PAGE_END);
+
+        textFieldSaldo.setPreferredSize(new Dimension(100, 150));
+        textFieldApuesta.setPreferredSize(new Dimension(100, 150));
 
         frame.setLocationRelativeTo(null);
-
         frame.setVisible(true);
         finalizado = true;
-        /*frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                // Enviar mensaje al servidor
-                try {
-                    if (juegoOut != null) {
-                        juegoOut.writeObject("X");
-                        juegoOut.flush();
-                        juegoOut.reset();
-                    }
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                } finally {
-                    frame.dispose();
-                    System.exit(0);
-                }
-            }
-        });*/
     }
 
+    //funcion para manejar las aouestas del cliente
     private void manejarApuesta(String tipoApuesta) {
         try {
             int cantidad = Integer.parseInt(textFieldApuesta.getText());
@@ -548,13 +575,14 @@ public class Cliente_GUI {
                 String inicial = tipoApuesta.substring(0, 1).toUpperCase();
                 mensajeApuesta = inicial + " " + cantidad;
             }
-            System.out.println(mensajeApuesta);
+            //System.out.println(mensajeApuesta);
             apuestas.add(mensajeApuesta);
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(frame, "Introduce un numero valido en el campo de apuesta.");
         }
     }
 
+    //vacia el vector de apuestas siempre y cuando sea necesario
     private void vaciarApuestas() {
         this.apuestas.clear();
         for (String apuesta : apuestas) {
@@ -562,10 +590,12 @@ public class Cliente_GUI {
         }
     }
 
+    //vacia el panel de apuestas de la interfaz grafica
     private void vaciarPanelApuestas() {
         SwingUtilities.invokeLater(() -> textAreaApuestas.setText("Apuestas realizadas:\n"));
     }
 
+    //procedimiento principal mediante el cual el cliente se comuncica con el servidor en el momento de estar dentro de uan ruleta
     private void startServerListenerThread() {
         Thread serverListenerThread = new Thread(() -> {
             try {
@@ -573,7 +603,9 @@ public class Cliente_GUI {
                 ruletaSocket = new Socket("localhost", PUERTO);
                 ruletaOut = new ObjectOutputStream(ruletaSocket.getOutputStream());
                 ruletaIn = new BufferedReader(new InputStreamReader(ruletaSocket.getInputStream()));
-                while (true) {
+                while (!detenerHiloLectura.get()) {
+                	/*utilizo un atomicboolean porque hay dos hilos que acceden a este parametro, el cierre con el boton cerrar y la lectura bloqueante, lo que busco es que antes de leer
+                    siempre se tenga este valor actualizado y que si se ha cerrado no lea, porque surge el error de socket cerrado.*/
                     String leido = ruletaIn.readLine();
                     if (leido != null) {
                         processServerMessage(leido);
@@ -584,8 +616,8 @@ public class Cliente_GUI {
             }
             finally {
                 try {
-                    if (ruletaSocket != null && !ruletaSocket.isClosed()) {
-                        ruletaSocket.close();
+                    if (ruletaSocket != null) {
+                        ruletaSocket.close(); //me interesa tener aqui el finally, en caso de que exista algun error sería una buena idea controlarlo aqui
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -595,6 +627,7 @@ public class Cliente_GUI {
         serverListenerThread.start();
     }
 
+    //accion para el procesamiento de los mensajes por parte del cliente del servidor
     private void processServerMessage(String leido)  {
         if (leido != null) {
             long tiempoServidor = 0;
@@ -617,7 +650,6 @@ public class Cliente_GUI {
 
             }
             if (leido.startsWith("G")) {
-                //String ganancias = leido.substring(1);
                 String ganancias = leido.substring(1, leido.indexOf(","));
                 saldo += Integer.parseInt(ganancias);
                 System.out.println("Saldo actualizado: " + saldo);
@@ -630,11 +662,14 @@ public class Cliente_GUI {
         }
     }
 
+    //vaciamos la tabla
     private void vaciarTabla(JTable table) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        model.setRowCount(0); // Elimina todas las filas del modelo
+        model.setRowCount(0);
     }
 
+
+    //accion para el funcionamiento del temporizador de las ruletas
     private void funcionaContador(ObjectOutputStream out, BufferedReader reader) {
 
         if (contadorTimer != null && contadorTimer.isRunning()) {
@@ -651,7 +686,7 @@ public class Cliente_GUI {
                 long tiempoActual = System.currentTimeMillis();
                 long tiempoRestante;
 
-                if (esPrimeraIteracion[0]) {
+                if (esPrimeraIteracion[0]) { //la primera vez empieza el temporizador con el tiempo del servidor
                     tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
                     if (tiempoRestante>15){
                         unavez=true;
@@ -667,7 +702,7 @@ public class Cliente_GUI {
                         accion04Ejecutada = true;
                         envioapuestas(apuestas);
                     }
-                    if(unavez==false && tiempoRestante < 15) {
+                    if(unavez==false && tiempoRestante < 15) { //IMPORTANTE: en caso de que te unas en los segundos de bloqueo, te aparecerá el popup y tu tampoco podrás apostar
                         SwingUtilities.invokeLater(() -> {dialogEspera = mostrarPopup_v2("No está permitido apostar en 15 segundos...","Información importante");});
                         frame.setEnabled(false);
                         unavez=true;
@@ -695,7 +730,7 @@ public class Cliente_GUI {
 
                     esPrimeraIteracion[0] = false;
 
-                    contadorTimer.start();
+                    contadorTimer.start(); //temporizador que se actualiza solo
                 }
             }
         });
@@ -703,7 +738,7 @@ public class Cliente_GUI {
         contadorTimer.start();
     }
 
-
+    //accion para el envio de apuestas al servidor
     private void envioapuestas(ArrayList<String> apuestas) {
         Thread serverWriterThread = new Thread(() -> {
             try {
@@ -717,6 +752,68 @@ public class Cliente_GUI {
         });
         serverWriterThread.start();
     }
+
+    /*HE REALIZADO ESTA ACCION PORQUE SE ME QUEDABAN HILOS DE AWT ABIERTOS Y EL CLIENTE NO FINALIZABA
+    asi que de esta manera, parando el timer y ademas cerrando todas las ventanas abiertas consigo su cierre*/
+    private void envioFin() {
+        Thread serverWriterThread = new Thread(() -> {
+            try {
+                System.out.println("Enviando FIN...");
+                juegoOut.writeObject("FIN");
+                juegoOut.flush();
+                if(juegoSocket!=null) {
+                    juegoSocket.close();
+                }
+                System.out.println("Socket cerrado.");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            } finally {
+                // Detener temporizador
+                if (contadorTimer != null) {
+                    contadorTimer.stop();
+                }
+                // Cerrar ventanas
+                for (Window window : Window.getWindows()) {
+                    window.dispose();
+                }
+            }
+        });
+        serverWriterThread.start();
+    }
+
+    private void envioFin2() {
+        Thread serverWriterThread = new Thread(() -> {
+            try {
+                System.out.println("Enviando FIN...");
+                ruletaOut.writeObject("FIN");
+                ruletaOut.flush();
+                // Marcar que el hilo de lectura debe detenerse
+                detenerHiloLectura.set(true);
+                if(ruletaIn!=null) {
+                    ruletaIn.close();
+                }
+                if(ruletaSocket!=null) {
+                    ruletaSocket.close();
+                }
+                System.out.println("Socket cerrado.");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            } finally {
+                // Detener temporizador
+                if (contadorTimer != null) {
+                    contadorTimer.stop();
+                }
+                // Cerrar ventanas
+                for (Window window : Window.getWindows()) {
+                    window.dispose();
+                }
+            }
+        });
+        serverWriterThread.start();
+    }
+
+
+    //accion para el envio del usuario al servidor
     private void enviousr(String usr) {
         Thread serverWriterThread = new Thread(() -> {
             try {
@@ -731,6 +828,9 @@ public class Cliente_GUI {
         serverWriterThread.start();
     }
 
+
+    //FUNCIONES PARA EL DESPLIEGUE DE POPUPS O LEADERBOARD (INTERFAZ GRAFICA)
+
     private JDialog mostrarPopup(String mensaje, String titulo) {
         JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
         JDialog dialog = optionPane.createDialog(titulo);
@@ -741,9 +841,8 @@ public class Cliente_GUI {
             public void windowClosing(WindowEvent e) {
             }
         });
-        int popupWidth = dialog.getWidth();
         int popupHeight = dialog.getHeight();
-        int popupX = (screenWidth - 400) / 2; // Centrado para el primer popup
+        int popupX = (screenWidth - 400) / 2;
         int popupY = (screenHeight - popupHeight) / 2;
         dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
@@ -763,7 +862,7 @@ public class Cliente_GUI {
         });
         int popupWidth = dialog.getWidth();
         int popupHeight = dialog.getHeight();
-        int popupX = (screenWidth - 400) / 2 + popupWidth; // Centrado y ajustado para el segundo popup
+        int popupX = (screenWidth - 400) / 2 + popupWidth;
         int popupY = (screenHeight - popupHeight) / 2;
         dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
@@ -773,7 +872,6 @@ public class Cliente_GUI {
 
 
     private void mostrarLeaderboard(String leido, JTable leaderboard) {
-        // Extrae los datos del string
         String leaderboardData = leido.substring(leido.indexOf(",") + 1);
         String[] usuarios = leaderboardData.split(",");
 
@@ -787,11 +885,10 @@ public class Cliente_GUI {
             }
         }
 
-        // Actualiza el modelo del JTable
         DefaultTableModel model = (DefaultTableModel) leaderboard.getModel();
-        model.setRowCount(0); // Vacía filas anteriores
+        model.setRowCount(0);
         for (String[] fila : leaderboardList) {
-            model.addRow(fila); // Añade nuevas filas
+            model.addRow(fila);
         }
     }
 

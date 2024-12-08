@@ -10,14 +10,14 @@ public class ServidorPrincipal {
     private static ServerSocket ss;
     private static int puerto=55555;
     private static int puertos;
-    private static ConcurrentHashMap<String, ServidorRuleta> ruletas;
-    private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, ServidorRuleta> ruletas; //Contedrá las ruletas activas
+    private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();//Contedrá los usuarios que se han registrado alguna vez en alguna ruleta
     private static ExecutorService pool; // Pool de hilos para manejar clientes
 
 
     public static void main(String[] args) {
 
-        // TODO Auto-generated method stub
+        // Aceptar ruletas indefinidamente
         puertos=55555;
         try {
             ss= new ServerSocket(puerto);
@@ -34,25 +34,33 @@ public class ServidorPrincipal {
         catch (IOException e) {
             e.printStackTrace();
         }
+        finally {
+            pool.shutdown();
+        }
 
 
     }
-    public static synchronized ConcurrentHashMap<String,ArrayList<String>> getRegistrados()
+    //Recuperar los registrados
+    public static ConcurrentHashMap<String,ArrayList<String>> getRegistrados()
     {
         return registrados;
     }
-    public static synchronized void putRegistrados(String nom,ArrayList<String> datos)
+    //Añadir un nuevo registrado
+    public static void putRegistrados(String nom,ArrayList<String> datos)
     {
         registrados.put(nom,datos);
     }
-    public static synchronized ConcurrentHashMap<String,ServidorRuleta> getRuletas()
+    //Recuperar las ruletas
+    public static ConcurrentHashMap<String,ServidorRuleta> getRuletas()
     {
         return ruletas;
     }
-    public static synchronized void putRuletas(String nom,ServidorRuleta s)
+    //Añadir una nueva ruleta
+    public static void putRuletas(String nom,ServidorRuleta s)
     {
         ruletas.put(nom,s);
     }
+    //Incrementar el número de puerto y devolver el nuevo
     public static synchronized int getPuerto()
     {
         puertos++;
