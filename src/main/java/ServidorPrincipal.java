@@ -1,3 +1,4 @@
+package src;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -10,7 +11,7 @@ public class ServidorPrincipal {
     private static ServerSocket ss;
     private static int puerto=55555;
     private static int puertos;
-    private static ConcurrentHashMap<String, ServidorRuleta> ruletas; //Contedrá las ruletas activas
+    private static ConcurrentHashMap<String, ServidorRuleta> ruletas; //Contedrá las ruletas activas 
     private static ConcurrentHashMap<String,ArrayList<String>> registrados=new ConcurrentHashMap<>();//Contedrá los usuarios que se han registrado alguna vez en alguna ruleta
     private static ExecutorService pool; // Pool de hilos para manejar clientes
 
@@ -35,8 +36,8 @@ public class ServidorPrincipal {
             e.printStackTrace();
         }
         finally {
-            pool.shutdown();
-        }
+        	pool.shutdown();
+		}
 
 
     }

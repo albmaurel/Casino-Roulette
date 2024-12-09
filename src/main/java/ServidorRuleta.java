@@ -1,3 +1,4 @@
+package src;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -29,7 +30,7 @@ public class ServidorRuleta implements Runnable{
     }
     @Override
     public void run() {
-        //Creamos el servidor propio de una ruleta
+    	//Creamos el servidor propio de una ruleta
         try (ServerSocket ss= new ServerSocket(puerto)) {
             System.out.println("Servidor ruleta iniciado en el puerto " + puerto);
             while (true) {
@@ -42,7 +43,7 @@ public class ServidorRuleta implements Runnable{
         } finally {
             poolClientes.shutdown();
             temporizador.shutdown();
-
+            
         }
     }
     //Recuperar el fin de una ronda
@@ -57,8 +58,8 @@ public class ServidorRuleta implements Runnable{
     }
     //Recuperar el puerto de la ruleta
     public synchronized int getPuerto() {
-        return puerto;
-    }
+    	return puerto;
+    } 
     //Recuperar los usuarios registrados en una ruleta
     public ConcurrentHashMap<String,ArrayList<String>> getMap()
     {
@@ -92,7 +93,7 @@ public class ServidorRuleta implements Runnable{
                 .reduce("", (acc, entry) -> acc + "," + entry)
                 .substring(1); // Elimina la coma inicial
     }
-    //Función para ordenar la leaderboard
+    //Función para ordenar la leaderboard 
     public synchronized void orderRank() {
         ranked = rank.entrySet().stream()
                 .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue())) // Orden descendente
@@ -107,10 +108,10 @@ public class ServidorRuleta implements Runnable{
     //Dar cominezo al temoporizador que controla los tiempos de una ronda
     public void iniciarTemporizador() {
         temporizador.scheduleAtFixedRate(new Runnable() {
-            public void run() {
+        	public void run() {
                 setFin(System.currentTimeMillis()+55000);
                 resetRank();
-            }
+        	}
         }, 0, 55, TimeUnit.SECONDS);
         generador.scheduleAtFixedRate(new GeneraGanador(),0,55, TimeUnit.SECONDS);
 
@@ -131,7 +132,7 @@ public class ServidorRuleta implements Runnable{
     //Recuperar el Id
     public String getId()
     {
-        return id;
+    	return id;
     }
 
 

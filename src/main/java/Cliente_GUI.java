@@ -1,3 +1,4 @@
+package src;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -66,20 +67,20 @@ public class Cliente_GUI {
     private JButton botonUnirse;
     private JTextField textoNombreSala;
 
-
+    
     public Cliente_GUI() {
         mostrarLogin();
     }
-    /*SwingUtilities.invokeLater() coloca el código dentro de un Runnable en la cola de eventos de la interfaz gráfica de
-      usuario (GUI) de Swing para que se ejecute en el hilo de eventos. Esto asegura que la actualización de la GUI
+    /*SwingUtilities.invokeLater() coloca el código dentro de un Runnable en la cola de eventos de la interfaz gráfica de 
+      usuario (GUI) de Swing para que se ejecute en el hilo de eventos. Esto asegura que la actualización de la GUI 
       se haga de manera segura desde el hilo principal, evitando problemas de concurrencia.*/
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Cliente_GUI::new);
-
+        
     }
 
     //CODIGO DE LA GUI DE LOGIN, Y SUS PROCEDIMIENTOS
-    private void mostrarLogin() {
+    private void mostrarLogin() {        
         try {
             juegoSocket = new Socket("localhost", 55555);
             juegoOut = new ObjectOutputStream(juegoSocket.getOutputStream());
@@ -92,7 +93,7 @@ public class Cliente_GUI {
 
             JPanel panelLogin = new JPanel();
             panelLogin.setLayout(new GridLayout(4, 2, 10, 10));
-            loginFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            loginFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
             panelLogin.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
             JLabel labelUsuario = new JLabel("Usuario:");
@@ -115,11 +116,11 @@ public class Cliente_GUI {
             loginFrame.add(panelLogin, BorderLayout.CENTER);
             loginFrame.setLocationRelativeTo(null);
             loginFrame.setVisible(true);
-
+            
             btnCerrar.addActionListener(e -> {
                 envioFin(); // Genera un hilo para el envío en caso de cierre
             });
-
+            
             btnIniciarSesion.addActionListener(e -> {
                 usuario = textFieldUsuario.getText().trim();
                 String contrasena = new String(passwordField.getPassword()).trim();
@@ -136,7 +137,7 @@ public class Cliente_GUI {
                     }
                 }
             });
-
+            
             btnCrearUsuario.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -162,7 +163,7 @@ public class Cliente_GUI {
         }
     }
 
-
+    
     //funcion para comunicacion con el servidor y validar el login del cliente
     private boolean validarLogin(String usuario, String contrasena) {
         try {
@@ -188,7 +189,7 @@ public class Cliente_GUI {
             return false;
         }
     }
-
+    
     //funcion para la creacion del usuario mediante la comunicacion con el servidor
     private boolean crearUsuario(String usuario, String contrasena) {
         try {
@@ -222,7 +223,7 @@ public class Cliente_GUI {
         GestorRuletasFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         GestorRuletasFrame.setLocationRelativeTo(null);
         GestorRuletasFrame.setLayout(new GridBagLayout());
-        GestorRuletasFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        GestorRuletasFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
 
         comboBoxModel = new DefaultComboBoxModel<>();
         comboBoxSalas = new JComboBox<>(comboBoxModel);
@@ -240,7 +241,7 @@ public class Cliente_GUI {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL; 
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -262,14 +263,14 @@ public class Cliente_GUI {
         gbc.gridwidth = 2;
         GestorRuletasFrame.add(comboBoxSalas, gbc);
 
-        gbc.gridx = 0;
+        gbc.gridx = 0; 
         gbc.gridy = 2;
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 1; 
         GestorRuletasFrame.add(btnCerrar, gbc);
 
-        gbc.gridx = 1;
+        gbc.gridx = 1; 
         gbc.gridy = 2;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 2; 
         GestorRuletasFrame.add(botonUnirse, gbc);
 
         // Llenar el comboBox con las ruletas disponibles
@@ -356,7 +357,7 @@ public class Cliente_GUI {
             }
         }
     }
-
+    
     //funcion para la comunicacion con el servidor para que el cliente se una a una sala
     private boolean unirseSala(String nombreSala) {
         try {
@@ -394,18 +395,18 @@ public class Cliente_GUI {
     private void iniciarInterfaz() {
         frame = new JFrame("Ruleta: " + nombreSala + " ---" + " Usuario: " + usuario);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1300, 600);
+        frame.setSize(1300, 600);  
         frame.setLayout(new BorderLayout());
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
 
         JPanel panelRuleta = new JPanel(new BorderLayout());
 
         JButton btnCero = new JButton("0");
         btnCero.setBackground(Color.GREEN);
-        btnCero.setPreferredSize(new Dimension(70, 300));
+        btnCero.setPreferredSize(new Dimension(70, 300)); 
         btnCero.addActionListener(e -> manejarApuesta("Numero 0"));
 
-        JPanel panelNumeros = new JPanel(new GridLayout(3, 12, 5, 5));
+        JPanel panelNumeros = new JPanel(new GridLayout(3, 12, 5, 5)); 
 
         int[][] numerosRuleta = {
                 {3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36},
@@ -530,27 +531,27 @@ public class Cliente_GUI {
         frame.add(panelApuestas, BorderLayout.NORTH);
         frame.add(panelSaldo, BorderLayout.WEST);
         frame.add(panelResultados, BorderLayout.EAST);
+        
 
-
-        JPanel panelCerrar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel panelCerrar = new JPanel(new FlowLayout(FlowLayout.LEFT)); 
         JButton btnCerrar = new JButton("Cerrar");
         btnCerrar.addActionListener(e -> {
-            envioFin2(); //AL IGUAL QUE ANTES, UTILIZAMOS ESTE METODO PARA EL TRATAMIENTO DESDE OTRO HILO DISTINTO DEL DRAWING
+            envioFin2(); //AL IGUAL QUE ANTES, UTILIZAMOS ESTE METODO PARA EL TRATAMIENTO DESDE OTRO HILO DISTINTO DEL DRAWING 
         });
         panelCerrar.add(btnCerrar);
-        frame.add(panelCerrar, BorderLayout.PAGE_END);JPanel panelInferior = new JPanel(new BorderLayout());
-        panelInferior.add(labelTemporizador, BorderLayout.CENTER);
-        panelInferior.add(panelCerrar, BorderLayout.WEST);
+        frame.add(panelCerrar, BorderLayout.PAGE_END);JPanel panelInferior = new JPanel(new BorderLayout()); 
+        panelInferior.add(labelTemporizador, BorderLayout.CENTER); 
+        panelInferior.add(panelCerrar, BorderLayout.WEST); 
         frame.add(panelInferior, BorderLayout.PAGE_END);
 
-        textFieldSaldo.setPreferredSize(new Dimension(100, 150));
-        textFieldApuesta.setPreferredSize(new Dimension(100, 150));
+        textFieldSaldo.setPreferredSize(new Dimension(100, 150));  
+        textFieldApuesta.setPreferredSize(new Dimension(100, 150)); 
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         finalizado = true;
     }
-
+    
     //funcion para manejar las aouestas del cliente
     private void manejarApuesta(String tipoApuesta) {
         try {
@@ -581,7 +582,7 @@ public class Cliente_GUI {
             JOptionPane.showMessageDialog(frame, "Introduce un numero valido en el campo de apuesta.");
         }
     }
-
+    
     //vacia el vector de apuestas siempre y cuando sea necesario
     private void vaciarApuestas() {
         this.apuestas.clear();
@@ -589,12 +590,12 @@ public class Cliente_GUI {
             System.out.println(apuesta);
         }
     }
-
+    
     //vacia el panel de apuestas de la interfaz grafica
     private void vaciarPanelApuestas() {
         SwingUtilities.invokeLater(() -> textAreaApuestas.setText("Apuestas realizadas:\n"));
     }
-
+    
     //procedimiento principal mediante el cual el cliente se comuncica con el servidor en el momento de estar dentro de uan ruleta
     private void startServerListenerThread() {
         Thread serverListenerThread = new Thread(() -> {
@@ -603,10 +604,10 @@ public class Cliente_GUI {
                 ruletaSocket = new Socket("localhost", PUERTO);
                 ruletaOut = new ObjectOutputStream(ruletaSocket.getOutputStream());
                 ruletaIn = new BufferedReader(new InputStreamReader(ruletaSocket.getInputStream()));
-                while (!detenerHiloLectura.get()) {
+                while (!detenerHiloLectura.get()) { 
                 	/*utilizo un atomicboolean porque hay dos hilos que acceden a este parametro, el cierre con el boton cerrar y la lectura bloqueante, lo que busco es que antes de leer
                     siempre se tenga este valor actualizado y que si se ha cerrado no lea, porque surge el error de socket cerrado.*/
-                    String leido = ruletaIn.readLine();
+                	String leido = ruletaIn.readLine();
                     if (leido != null) {
                         processServerMessage(leido);
                     }
@@ -626,7 +627,7 @@ public class Cliente_GUI {
         });
         serverListenerThread.start();
     }
-
+    
     //accion para el procesamiento de los mensajes por parte del cliente del servidor
     private void processServerMessage(String leido)  {
         if (leido != null) {
@@ -648,7 +649,7 @@ public class Cliente_GUI {
                 });
                 SwingUtilities.invokeLater(() -> {dialogEspera = mostrarPopup_v2("No está permitido apostar en 15 segundos...","Información importante");});
 
-            }
+            } 
             if (leido.startsWith("G")) {
                 String ganancias = leido.substring(1, leido.indexOf(","));
                 saldo += Integer.parseInt(ganancias);
@@ -661,14 +662,14 @@ public class Cliente_GUI {
             }
         }
     }
-
-    //vaciamos la tabla
+    
+    //vaciamos la tabla 
     private void vaciarTabla(JTable table) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        model.setRowCount(0);
+        model.setRowCount(0); 
     }
-
-
+    
+    
     //accion para el funcionamiento del temporizador de las ruletas
     private void funcionaContador(ObjectOutputStream out, BufferedReader reader) {
 
@@ -689,7 +690,7 @@ public class Cliente_GUI {
                 if (esPrimeraIteracion[0]) { //la primera vez empieza el temporizador con el tiempo del servidor
                     tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
                     if (tiempoRestante>15){
-                        unavez=true;
+                    	unavez=true;
                     }
                 } else {
                     tiempoRestante = (tiempoFinal - tiempoActual) / 1000;
@@ -715,8 +716,8 @@ public class Cliente_GUI {
                         dialogGanador.dispose();
                         dialogGanador = null;
                     }
-                    if (dialogEspera != null && dialogEspera.isShowing()) {
-                        dialogEspera.dispose();
+                   if (dialogEspera != null && dialogEspera.isShowing()) {
+                       dialogEspera.dispose();
                         dialogEspera = null;
                     }
                     vaciarTabla(leaderboard);
@@ -752,7 +753,7 @@ public class Cliente_GUI {
         });
         serverWriterThread.start();
     }
-
+    
     /*HE REALIZADO ESTA ACCION PORQUE SE ME QUEDABAN HILOS DE AWT ABIERTOS Y EL CLIENTE NO FINALIZABA
     asi que de esta manera, parando el timer y ademas cerrando todas las ventanas abiertas consigo su cierre*/
     private void envioFin() {
@@ -762,7 +763,7 @@ public class Cliente_GUI {
                 juegoOut.writeObject("FIN");
                 juegoOut.flush();
                 if(juegoSocket!=null) {
-                    juegoSocket.close();
+                	juegoSocket.close();
                 }
                 System.out.println("Socket cerrado.");
             } catch (IOException ex) {
@@ -780,7 +781,7 @@ public class Cliente_GUI {
         });
         serverWriterThread.start();
     }
-
+    
     private void envioFin2() {
         Thread serverWriterThread = new Thread(() -> {
             try {
@@ -790,10 +791,10 @@ public class Cliente_GUI {
                 // Marcar que el hilo de lectura debe detenerse
                 detenerHiloLectura.set(true);
                 if(ruletaIn!=null) {
-                    ruletaIn.close();
+                	ruletaIn.close();
                 }
                 if(ruletaSocket!=null) {
-                    ruletaSocket.close();
+                	ruletaSocket.close();
                 }
                 System.out.println("Socket cerrado.");
             } catch (IOException ex) {
@@ -813,7 +814,7 @@ public class Cliente_GUI {
     }
 
 
-    //accion para el envio del usuario al servidor
+   //accion para el envio del usuario al servidor
     private void enviousr(String usr) {
         Thread serverWriterThread = new Thread(() -> {
             try {
@@ -827,10 +828,10 @@ public class Cliente_GUI {
         });
         serverWriterThread.start();
     }
-
-
+    
+    
     //FUNCIONES PARA EL DESPLIEGUE DE POPUPS O LEADERBOARD (INTERFAZ GRAFICA)
-
+    
     private JDialog mostrarPopup(String mensaje, String titulo) {
         JOptionPane optionPane = new JOptionPane(mensaje, JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
         JDialog dialog = optionPane.createDialog(titulo);
@@ -842,7 +843,7 @@ public class Cliente_GUI {
             }
         });
         int popupHeight = dialog.getHeight();
-        int popupX = (screenWidth - 400) / 2;
+        int popupX = (screenWidth - 400) / 2; 
         int popupY = (screenHeight - popupHeight) / 2;
         dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
@@ -862,7 +863,7 @@ public class Cliente_GUI {
         });
         int popupWidth = dialog.getWidth();
         int popupHeight = dialog.getHeight();
-        int popupX = (screenWidth - 400) / 2 + popupWidth;
+        int popupX = (screenWidth - 400) / 2 + popupWidth; 
         int popupY = (screenHeight - popupHeight) / 2;
         dialog.setLocation(popupX, popupY);
         dialog.setVisible(true);
@@ -886,9 +887,9 @@ public class Cliente_GUI {
         }
 
         DefaultTableModel model = (DefaultTableModel) leaderboard.getModel();
-        model.setRowCount(0);
+        model.setRowCount(0); 
         for (String[] fila : leaderboardList) {
-            model.addRow(fila);
+            model.addRow(fila); 
         }
     }
 

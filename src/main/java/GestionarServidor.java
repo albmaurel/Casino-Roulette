@@ -1,3 +1,5 @@
+package src;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -23,19 +25,19 @@ public class GestionarServidor implements Runnable{
             ObjectInputStream ois=new ObjectInputStream(socket.getInputStream());
 
             while(!logged) {
-                //En este bucle se gestiona el login
+            	//En este bucle se gestiona el login
                 String leido = (String) ois.readObject();
                 if(leido.equals("FIN"))
                 {
-                    //podria cerrar aqui el socket pero al tenerlo en el finally no es necesario
-                    salir=true;
-                    break;
+                	//podria cerrar aqui el socket pero al tenerlo en el finally no es necesario
+                	salir=true;
+                	break;
                 }
                 String aux=leido.split(" ")[0];
                 String usuario=leido.split(" ")[1];
                 String contrasena=leido.split(" ")[2];
                 if(aux.equals("C")) {
-                    //Caso  nuevo usuario, se le asigna un saldo inicial de 10000
+                	//Caso  nuevo usuario, se le asigna un saldo inicial de 10000
                     if (!ServidorPrincipal.getRegistrados().keySet().contains(usuario)) {
                         usr=usuario;
                         ArrayList<String> e = new ArrayList<>();
@@ -59,7 +61,7 @@ public class GestionarServidor implements Runnable{
                         writer.flush();
                     }
                 }else {
-                    //Si lo contiene se recupera el saldo que tenía anterormente.
+                	//Si lo contiene se recupera el saldo que tenía anterormente.
                     if (ServidorPrincipal.getRegistrados().keySet().contains(usuario)) {
                         ArrayList<String> datos = ServidorPrincipal.getRegistrados().get(usuario);
                         if(datos.size()==3 && datos.get(2).equals("T"))
@@ -76,6 +78,7 @@ public class GestionarServidor implements Runnable{
                             }
                             writer.write("S" + datos.get(1)+ " "+ruletas+ "\n");
                             writer.flush();
+                            datos.remove(2);
                             datos.add("T");
                             ServidorPrincipal.putRegistrados(usuario,datos);
                             logged = true;
@@ -100,59 +103,59 @@ public class GestionarServidor implements Runnable{
                 //Caso cerrar la conexión, leido FIN
                 if(o.equals("FIN"))
                 {
-                    ArrayList<String> datos1 = ServidorPrincipal.getRegistrados().get(usr);
+                	ArrayList<String> datos1 = ServidorPrincipal.getRegistrados().get(usr);
                     datos1.remove(2);
                     datos1.add("F");
                     ServidorPrincipal.putRegistrados(usr, datos1);
                     //no es necesario cerrar socket ya que se cierra en el finally
-                    break;
+                	break;
                 }
                 //Caso elegir un ruleta
-                else
+                else 
                 {
-                    String leido=(String) o;
-                    String opcion=leido.split(" ")[1];
-                    String operacion=leido.split(" ")[0];
-                    if(operacion.equals("C"))
-                    {
-                        //Si no existe se crea una nueva ruleta(hasta 20) y se comienza su ejecución
-                        if(!ServidorPrincipal.getRuletas().keySet().contains(opcion) && ServidorPrincipal.getRuletas().size()<=20)
-                        {
-                            int puerto=ServidorPrincipal.getPuerto();
-                            ServidorRuleta nueva= new ServidorRuleta(opcion,puerto);
-                            ServidorPrincipal.putRuletas(opcion, nueva);
-                            elegida=true;
-                            ArrayList<String> aux=ServidorPrincipal.getRegistrados().get(usr);
-                            nueva.actualizarUsuarios(usr,aux);
-                            Thread ruletaThread = new Thread(ServidorPrincipal.getRuletas().get(opcion));
-                            ruletaThread.start();
-                            writer.write("O"+puerto+"\n");
-                            writer.flush();
-                        }
-                        else
-                        {
-                            writer.write("I\n");
-                            writer.flush();
-                        }
-                    }
-                    else
-                    {
-                        if(ServidorPrincipal.getRuletas().keySet().contains(opcion))
-                        {
-                            //Si ya estaba creada simplemente devolvemos su puerto para que el cliente se pueda conectar a ella
-                            ArrayList<String> aux=ServidorPrincipal.getRegistrados().get(usr);
-                            ServidorPrincipal.getRuletas().get(opcion).actualizarUsuarios(usr,aux);
-                            elegida=true;
-                            writer.write("O"+ServidorPrincipal.getRuletas().get(opcion).getPuerto()+"\n");
-                            System.out.println(ServidorPrincipal.getRuletas().get(opcion).getPuerto());
-                            writer.flush();}
-                        else
-                        {
-                            writer.write("I\n");
-                            writer.flush();
-                        }
-                    }
-                }
+                	String leido=(String) o;
+	                String opcion=leido.split(" ")[1];
+	                String operacion=leido.split(" ")[0];
+	                if(operacion.equals("C"))
+	                {
+	                	//Si no existe se crea una nueva ruleta(hasta 20) y se comienza su ejecución
+	                    if(!ServidorPrincipal.getRuletas().keySet().contains(opcion) && ServidorPrincipal.getRuletas().size()<=20)
+	                    {
+	                        int puerto=ServidorPrincipal.getPuerto();
+	                        ServidorRuleta nueva= new ServidorRuleta(opcion,puerto);
+	                        ServidorPrincipal.putRuletas(opcion, nueva);
+	                        elegida=true;
+	                        ArrayList<String> aux=ServidorPrincipal.getRegistrados().get(usr);
+	                        nueva.actualizarUsuarios(usr,aux);
+	                        Thread ruletaThread = new Thread(ServidorPrincipal.getRuletas().get(opcion));
+	                        ruletaThread.start();  
+	                        writer.write("O"+puerto+"\n");
+	                        writer.flush();
+	                    }
+	                    else
+	                    {
+	                        writer.write("I\n");
+	                        writer.flush();
+	                    }
+	                }
+	                else
+	                {
+	                    if(ServidorPrincipal.getRuletas().keySet().contains(opcion))
+	                    {
+	                    	//Si ya estaba creada simplemente devolvemos su puerto para que el cliente se pueda conectar a ella
+	                        ArrayList<String> aux=ServidorPrincipal.getRegistrados().get(usr);
+	                        ServidorPrincipal.getRuletas().get(opcion).actualizarUsuarios(usr,aux);
+	                        elegida=true; 
+	                        writer.write("O"+ServidorPrincipal.getRuletas().get(opcion).getPuerto()+"\n");
+	                        System.out.println(ServidorPrincipal.getRuletas().get(opcion).getPuerto());
+	                        writer.flush();}
+	                    else
+	                    {
+	                        writer.write("I\n");
+	                        writer.flush();
+	                    }
+	                }
+	            }
             }
         }
         catch(IOException e)
@@ -165,9 +168,9 @@ public class GestionarServidor implements Runnable{
         {
             try
             {
-                if(socket!=null) {
-                    socket.close();
-                }
+            	if(socket!=null) {
+                	socket.close();
+            	}
             }
             catch (IOException e){e.printStackTrace();}
         }

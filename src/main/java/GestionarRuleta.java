@@ -1,3 +1,5 @@
+package src;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -27,7 +29,7 @@ public class GestionarRuleta implements Runnable{
 
             if(sr.getMap().size()==1)
             {
-                //Inicamos el temporizador de la ruleta en el caso de que estuviese vacía.
+            	//Inicamos el temporizador de la ruleta en el caso de que estuviese vacía.
                 sr.iniciarTemporizador();
                 long waitTime = aux1 + 100 - System.currentTimeMillis();
                 if (waitTime > 0) {
@@ -41,7 +43,7 @@ public class GestionarRuleta implements Runnable{
             long aux;
             while (seguir)
             {
-                //Gestión del ciclo de apuestas, se trata también el caso de cerrar la sala, para ello se comprueba el valor leido.
+            	//Gestión del ciclo de apuestas, se trata también el caso de cerrar la sala, para ello se comprueba el valor leido.
                 ganancias=0;
                 apuestas=null;
                 if(primera==false) {
@@ -52,7 +54,12 @@ public class GestionarRuleta implements Runnable{
                     usr=(String)ois.readObject();
                     if(usr.equals("FIN"))
                     {
-                        break;
+                    	ArrayList<String> datos1 = sr.getMap().get(usr);
+	                    datos1.remove(2);
+	                    datos1.add("F");
+	                    sr.actualizarUsuarios(usr,datos1);
+	                    ServidorPrincipal.putRegistrados(usr, datos1);
+                    	break;
                     }
                     usr=usr.substring(1);
                     System.out.println("U: "+usr);
@@ -61,75 +68,75 @@ public class GestionarRuleta implements Runnable{
                 Object o=ois.readObject();
                 if(o.equals("FIN"))
                 {
-                    //Caso cerrar conexión
-                    ArrayList<String> datos1 = sr.getMap().get(usr);
-                    datos1.remove(2);
-                    datos1.add("F");
-                    sr.actualizarUsuarios(usr,datos1);
-                    ServidorPrincipal.putRegistrados(usr, datos1);
-                    break;
-
+                		//Caso cerrar conexión
+	                	ArrayList<String> datos1 = sr.getMap().get(usr);
+	                    datos1.remove(2);
+	                    datos1.add("F");
+	                    sr.actualizarUsuarios(usr,datos1);
+	                    ServidorPrincipal.putRegistrados(usr, datos1);
+                    	break;
+                    
                 }
                 else
-                {
-                    //Caso apuestar recibidas.
-                    apuestas = (ArrayList<String>) o;
-                    for (String apuesta : apuestas) {
-                        System.out.println("Apuesta: "+apuesta);
-                        ganancias += calcular(apuesta);
-                        //System.out.println(ganancias);
-                    }
-                    ArrayList<String> datos=sr.getMap().get(usr);
-                    datos.set(1,(ganancias+Integer.parseInt(datos.get(1)))+"");
-                    sr.actualizarUsuarios(usr,datos);
-                    sr.actualizarRank(usr,ganancias);
-
-
-                    writer.write("N"+sr.getGanador() + "\n");
-                    writer.flush();
-                    //System.out.println(sr.getGanador());
-                    String res = "G" + ganancias;
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                    //Construcción de la string que contendrá el leaderboard
-                    String leaderboard = sr.generateLeaderboard();
-                    res += "," + leaderboard;
-                    res += "\n";
-                    writer.write(res);
-                    writer.flush();
-                    //System.out.println(res);
-                    //System.out.println(ganancias);
-                    // Para que te lo mande en el 0
-                    long waitTime = aux1 + 100 - System.currentTimeMillis()+1000;
-                    if (waitTime > 0) {
-                        try {
-                            Thread.sleep(waitTime);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
+	            {
+                	//Caso apuestar recibidas. 
+                	apuestas = (ArrayList<String>) o;
+	                for (String apuesta : apuestas) {
+	                    System.out.println("Apuesta: "+apuesta);
+	                    ganancias += calcular(apuesta);
+	                    //System.out.println(ganancias);
+	                }
+	                ArrayList<String> datos=sr.getMap().get(usr);
+	                datos.set(1,(ganancias+Integer.parseInt(datos.get(1)))+"");
+	                sr.actualizarUsuarios(usr,datos);
+	                sr.actualizarRank(usr,ganancias);
+	
+	
+	                writer.write("N"+sr.getGanador() + "\n");
+	                writer.flush();
+	                //System.out.println(sr.getGanador());
+	                String res = "G" + ganancias;
+	                try {
+	                    Thread.sleep(1000);
+	                } catch (InterruptedException e) {
+	                    e.printStackTrace();
+	                }
+	
+	                //Construcción de la string que contendrá el leaderboard
+	                String leaderboard = sr.generateLeaderboard();
+	                res += "," + leaderboard;
+	                res += "\n";
+	                writer.write(res);
+	                writer.flush();
+	                //System.out.println(res);
+	                //System.out.println(ganancias);
+	                // Para que te lo mande en el 0
+	                long waitTime = aux1 + 100 - System.currentTimeMillis()+1000;
+	                if (waitTime > 0) {
+	                    try {
+	                        Thread.sleep(waitTime);
+	                    } catch (InterruptedException e) {
+	                        e.printStackTrace();
+	                    }
+	                }
+	            }
+                
             }
 
         }
         catch(IOException e)
         {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        	e.printStackTrace();
+        	} catch (ClassNotFoundException e) {
+        		e.printStackTrace();
         }
         finally
         {
             try
             {
-                if(s!=null) {
-                    s.close();
-                }
+            	if(s!=null) {
+                	s.close();
+            	}
             }
             catch (IOException e){e.printStackTrace();}
         }
@@ -152,11 +159,11 @@ public class GestionarRuleta implements Runnable{
             {
                 return 2*valor;
             }
-            else if(ganador%2==0 && s1.equals("P"))
+            else if(ganador%2==0 && s1.equals("P") && ganador!=0)
             {
                 return 2*valor;
             }
-            else if(ganador%2!=0 && s1.equals("I"))
+            else if(ganador%2!=0 && s1.equals("I") && ganador!=0)
             {
                 return 2*valor;
             }
